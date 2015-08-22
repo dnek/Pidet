@@ -9,6 +9,8 @@ IDE for Piet.
   - http://www.kembo.org/piet/index.htm
 - こちらもどうぞ。
   - http://www.slideshare.net/KMC_JP/piet-46068527
+- こちらにビルド済みの実行ファイルがあります。最新リリースのPidet*.zipの中にあります。
+  - https://github.com/kndama/Pidet/releases
 
 ## Usage
 ### エディタ
