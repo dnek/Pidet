@@ -471,15 +471,12 @@ namespace pidet
                             inputRequired = true;
                             break;
                         }
-                        try
+                        int innum;
+                        if(int.TryParse(tmp[0], out innum))
                         {
-                            stack.Add(int.Parse(tmp[0]));
+                            stack.Add(innum);
+                            inputStr = inputStr.Remove(0, inputStr.IndexOf(tmp[0]) + tmp[0].Length);
                         }
-                        catch (Exception)
-                        {
-                            break;
-                        }
-                        inputStr = inputStr.Remove(0, inputStr.IndexOf(tmp[0]) + tmp[0].Length);
                         break;
                     case 15: //in(c)
                         if (inputStr.Length == 0)
