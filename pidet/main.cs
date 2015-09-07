@@ -413,7 +413,8 @@ namespace pidet
                     case 7: //mod
                         if (stack.Count < 2) break;
                         if (stack[last] == 0) break;
-                        stack[last - 1] = Math.Abs(stack[last - 1] % stack[last]) * Math.Sign(stack[last]);
+                        stack[last - 1] %= stack[last];
+                        if (stack[last] * stack[last - 1] < 0) stack[last - 1] += stack[last];
                         stack.RemoveAt(last);
                         break;
                     case 8: //not
