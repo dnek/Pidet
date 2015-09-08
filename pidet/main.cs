@@ -667,10 +667,17 @@ namespace pidet
 
         #region Edit
 
+        void SetSaveRequired(bool e)
+        {
+            saveRequired = e;
+            if (hisIndex > 0 && saveRequired) this.Text = fileName + " * - Pidet";
+            else this.Text = fileName + " - Pidet";
+        }
+
         void AddHistory()
         {
-            saveRequired = true;
             ++hisIndex;
+            SetSaveRequired(true);
             int c = history.Count;
             for (int i = hisIndex; i < c; i++)
             {
@@ -1204,13 +1211,13 @@ namespace pidet
             sY = newSY;
             fileCSize = 10;
             fileName = "NoName";
-            this.Text = fileName + " - Pidet";
+            //this.Text = fileName + " - Pidet";
             filePath = "";
             ResetCodel();
             ResetBP();
             RefreshField();
             ResetHistory();
-            saveRequired = false;
+            SetSaveRequired(false);
         }
 
         void OpenFile(string openFilePath = "")
@@ -1262,7 +1269,7 @@ namespace pidet
             }
             fileCSize = openCSize;
             fileName = Path.GetFileName(openFilePath);
-            this.Text = fileName + " - Pidet";
+            //this.Text = fileName + " - Pidet";
             filePath = openFilePath;
             sX = oX;
             sY = oY;
@@ -1291,7 +1298,7 @@ namespace pidet
             ResetBP();
             RefreshField();
             ResetHistory();
-            saveRequired = false;
+            SetSaveRequired(false);
         }
 
         void SaveFile()
@@ -1323,7 +1330,7 @@ namespace pidet
             try
             {
                 bmp.Save(filePath,FormatByName(filePath));
-                saveRequired = false;
+                SetSaveRequired(false);
             }
             catch (Exception)
             {
@@ -1341,7 +1348,7 @@ namespace pidet
             if (saveCSize == 0) return;
             fileCSize = saveCSize;
             fileName = Path.GetFileName(sfd.FileName);
-            this.Text = fileName + " - Pidet";
+            //this.Text = fileName + " - Pidet";
             filePath = sfd.FileName;
             Bitmap bmp = new Bitmap(sX * fileCSize, sY * fileCSize);
             Graphics g = Graphics.FromImage(bmp);
@@ -1365,7 +1372,7 @@ namespace pidet
             try
             {
                 bmp.Save(filePath, FormatByName(filePath));
-                saveRequired = false;
+                SetSaveRequired(false);
             }
             catch (Exception)
             {
@@ -1384,7 +1391,7 @@ namespace pidet
             if (saveCSize == 0) return;
             fileCSize = saveCSize;
             fileName = Path.GetFileName(sfd.FileName);
-            this.Text = fileName + " - Pidet";
+            //this.Text = fileName + " - Pidet";
             filePath = sfd.FileName;
             Bitmap bmp = new Bitmap(sX * fileCSize, sY * fileCSize);
             Graphics g = Graphics.FromImage(bmp);
@@ -1408,7 +1415,7 @@ namespace pidet
             try
             {
                 bmp.Save(filePath);
-                saveRequired = false;
+                SetSaveRequired(false);
             }
             catch (Exception)
             {
