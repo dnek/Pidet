@@ -6,6 +6,7 @@ using System.IO;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Media.Imaging;
 
 namespace pidet
 {
@@ -1246,10 +1247,12 @@ namespace pidet
             if (editMode == 2) EndDebug();
             FileStream fs = null;
             Bitmap bmp = null;
+            BitmapFrame bmpframe = null;
             try
             {
                 fs = new FileStream(openFilePath, FileMode.Open, FileAccess.Read);
                 bmp = (Bitmap)Bitmap.FromStream(fs);
+                bmpframe = BitmapFrame.Create(fs);
             }
             catch (Exception)
             {
