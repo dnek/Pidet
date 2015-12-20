@@ -125,6 +125,7 @@ namespace pidet
                     LBlue = 12, Blue = 13, DBlue = 14, LMagenta = 15, Magenta = 16, DMagenta = 17, White = 18, Black = 19;
         }
         List<List<int>> codel = new List<List<int>>(), buffer = new List<List<int>>();
+        List<Comment> comments;
         List<List<bool>> bp = new List<List<bool>>();
         List<List<List<int>>> history = new List<List<List<int>>>();
         int cSize = 20, sX = 3, sY = 3, editMode = 0, hisIndex = -1, currentColor = 0, standardColor = 0; //editmode: 0=pen, 1=selector, 2=debug
@@ -1296,6 +1297,18 @@ namespace pidet
             Marshal.Copy(buf, 0, bmpData.Scan0, buf.Length);
             bmp.UnlockBits(bmpData);
             bmp.Dispose();
+
+            BitmapMetadata metadata = (BitmapMetadata)bmpframe.Metadata.Clone();
+            for (int i = 0;  (string)metadata.GetQuery("/[" + i.ToString() + "]iTXt/Keyword") != null; ++i)
+            {
+                string iTXtKeyword = (string)metadata.GetQuery("/[" + i.ToString() + "]iTXt/Keyword");
+                string iTXtTextEntry = (string)metadata.GetQuery("/[" + i.ToString() + "]iTXt/TextEntry");
+                if (iTXtKeyword == "Piet Source Code Comment(CAPPNG)")
+                {
+                    comments.Add(Comment.Decode(iTXtTextEntry));
+                }
+            }
+
             //sw.Stop();
             //MessageBox.Show(sw.ElapsedMilliseconds.ToString());
             ResetBP();
