@@ -50,7 +50,7 @@ IDE for Piet.
 - 読み込み時、追加色は白ブロックに変換します。
 
 ##Author
-- dama
+- dama([@dnek_](https://twitter.com/dnek_))
 
 ##License
 - MIT License
