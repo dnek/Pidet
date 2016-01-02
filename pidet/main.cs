@@ -149,8 +149,6 @@ namespace pidet
 
         void ChangeEditMode(int e)
         {
-            if (e == -1) e = dgv_field.MultiSelect ? 1 : 0;
-            if (e == -2) e = dgv_field.MultiSelect ? 0 : 1;
             editMode = e;
             if (e == 0)
             {
@@ -180,6 +178,23 @@ namespace pidet
                 dgv_field.Cursor = Cursors.Default;
                 lbl_status.BackColor = Color.LavenderBlush;
             }
+        }
+
+        void ToggleEditMode()
+        {
+            if (editMode == 2)
+            {
+                // throw Exception;
+                return;
+            }
+            int e = dgv_field.MultiSelect ? 0 : 1;
+            ChangeEditMode(e);
+        }
+
+        void EndDebugMode()
+        {
+            int e = dgv_field.MultiSelect ? 1 : 0;
+            ChangeEditMode(e);
         }
 
         #region Debug
@@ -650,7 +665,7 @@ namespace pidet
         {
             if (msg != "") MessageBox.Show(msg);
             paused = true;
-            ChangeEditMode(-1);
+            EndDebugMode();
             tb_input.Text = ReplaceCrLf(inputStrTmp, false);
             tb_output.Text = ReplaceCrLf(outputStr, false);
             tb_stack.Text = "";
@@ -1612,7 +1627,11 @@ namespace pidet
         {
             if (editMode != 2)
             {
-                if (e.KeyData == Keys.C || e.KeyData == Keys.T) { ChangeEditMode(-2); e.Handled = true; }
+                if (e.KeyData == Keys.C || e.KeyData == Keys.T)
+                {
+                    ToggleEditMode();
+                    e.Handled = true;
+                }
                 if (e.KeyData == (Keys.Control | Keys.A)) dgv_field.SelectAll();
                 
                 if (e.KeyData == (Keys.Control | Keys.B))
@@ -1774,7 +1793,7 @@ namespace pidet
 
         private void btn_change_Click(object sender, EventArgs e)
         {
-            ChangeEditMode(-2);
+            ToggleEditMode();
         }
 
         #endregion
@@ -1887,7 +1906,7 @@ namespace pidet
 
         private void tsmi_ChangeTool_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) ChangeEditMode(-2);
+            if (editMode != 2) ToggleEditMode();
         }
 
         private void tsmi_ZoomIn_Click(object sender, EventArgs e)
