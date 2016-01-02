@@ -126,7 +126,8 @@ namespace pidet
         List<List<int>> codel = new List<List<int>>(), buffer = new List<List<int>>();
         List<List<bool>> bp = new List<List<bool>>();
         List<List<List<int>>> history = new List<List<List<int>>>();
-        int cSize = 20, sX = 3, sY = 3, editMode = 0, hisIndex = -1, currentColor = 0, standardColor = 0; //editmode: 0=pen, 1=selector, 2=debug
+        int cSize = 20, sX = 3, sY = 3, hisIndex = -1, currentColor = 0, standardColor = 0;
+        Mode editMode = Mode.PEN_MODE;
         bool penWriting = false;
 
         int fileCSize = 10;
@@ -145,12 +146,19 @@ namespace pidet
                 dpName = { "→(0)", "↓(1)", "←(2)", "↑(3)" },
                 ccName = { "L(0)", "R(1)" };
 
+        enum Mode
+        {
+            PEN_MODE,
+            SELECTOR_MODE,
+            DEBUG_MODE
+        }
+
         #endregion
 
-        void ChangeEditMode(int e)
+        void ChangeEditMode(Mode e)
         {
             editMode = e;
-            if (e == 0)
+            if (e == Mode.PEN_MODE)
             {
                 //dgv_field.Enabled = true;
                 btn_change.Enabled = true;
@@ -160,7 +168,7 @@ namespace pidet
                 dgv_field.Refresh();
                 lbl_status.BackColor = Color.Lavender;
             }
-            else if (e == 1)
+            else if (e == Mode.SELECTOR_MODE)
             {
                 //dgv_field.Enabled = true;
                 btn_change.Enabled = true;
@@ -182,19 +190,32 @@ namespace pidet
 
         void ToggleEditMode()
         {
-            if (editMode == 2)
+            if (editMode == Mode.DEBUG_MODE)
             {
                 // throw Exception;
                 return;
             }
-            int e = dgv_field.MultiSelect ? 0 : 1;
-            ChangeEditMode(e);
+
+            if (dgv_field.MultiSelect)
+            {
+                ChangeEditMode(Mode.PEN_MODE);
+            }
+            else
+            {
+                ChangeEditMode(Mode.SELECTOR_MODE);
+            }
         }
 
         void EndDebugMode()
         {
-            int e = dgv_field.MultiSelect ? 1 : 0;
-            ChangeEditMode(e);
+            if (dgv_field.MultiSelect)
+            {
+                ChangeEditMode(Mode.SELECTOR_MODE);
+            }
+            else
+            {
+                ChangeEditMode(Mode.PEN_MODE);
+            }
         }
 
         #region Debug
@@ -207,7 +228,7 @@ namespace pidet
 
         void PrepareDebug()
         {
-            ChangeEditMode(2);
+            ChangeEditMode(Mode.DEBUG_MODE);
             ccX = ccY = ncX = ncY = dp = cc = wc = sc = 0;
             inputStr = inputStrTmp = ReplaceCrLf(tb_input.Text);
             outputStr = currentCommand = "";
@@ -573,7 +594,7 @@ namespace pidet
                 jumpT = NumericInputBox("ジャンプする回数を指定して下さい。", "Pidet", 1, 1, 1000000000);
                 if (jumpT == 0) return;
             }
-            if (editMode != 2) PrepareDebug();
+            if (editMode != Mode.DEBUG_MODE) PrepareDebug();
             if (stepF)
             {
                 AdvanceDebug();
@@ -624,7 +645,7 @@ namespace pidet
                     }
                 }
             }
-            if (editMode == 2) PauseDebug();
+            if (editMode == Mode.DEBUG_MODE) PauseDebug();
         }
 
         void PauseDebug()
@@ -1221,7 +1242,7 @@ namespace pidet
             if (newSX == 0) return;
             int newSY = NumericInputBox("キャンバスの高さを指定して下さい。", "Pidet", 10, 1, 100000);
             if (newSY == 0) return;
-            if (editMode == 2) EndDebug();
+            if (editMode == Mode.DEBUG_MODE) EndDebug();
             sX = newSX;
             sY = newSY;
             fileCSize = 10;
@@ -1258,7 +1279,7 @@ namespace pidet
             }
             int openCSize = NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", 10, 1, 10000);
             if (openCSize < 1) return;
-            if (editMode == 2) EndDebug();
+            if (editMode == Mode.DEBUG_MODE) EndDebug();
             FileStream fs = null;
             Bitmap bmp = null;
             try
@@ -1525,7 +1546,7 @@ namespace pidet
 
         private void dgv_field_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (editMode == 2)
+            if (editMode == Mode.DEBUG_MODE)
             {
                 if (e.ColumnIndex == ccX && e.RowIndex == ccY)
                 {
@@ -1587,7 +1608,7 @@ namespace pidet
             if (e.KeyData == (Keys.Control | Keys.Shift | Keys.S)) SaveFileAs();
             //if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Shift | Keys.S)) SaveFileAsEx();
 
-            if (editMode == 2)
+            if (editMode == Mode.DEBUG_MODE)
             {
                 if (e.KeyData == Keys.Escape || (e.KeyData == (Keys.Shift | Keys.F5))) ResetDebug();
             }
@@ -1595,7 +1616,7 @@ namespace pidet
             if (e.KeyData == Keys.F10) { StartDebug(false, true); e.Handled = true; }
             if (e.KeyData == Keys.F11) { StartDebug(true); e.Handled = true; }
 
-            if (editMode != 2)
+            if (editMode != Mode.DEBUG_MODE)
             {
                 if (e.KeyData == (Keys.Control | Keys.K)) ChangeCurrentColor(codel[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y]);
                 if (e.KeyData == (Keys.Control | Keys.R)) ChangeSXSY();
@@ -1625,7 +1646,7 @@ namespace pidet
 
         private void dgv_field_KeyDown(object sender, KeyEventArgs e)
         {
-            if (editMode != 2)
+            if (editMode != Mode.DEBUG_MODE)
             {
                 if (e.KeyData == Keys.C || e.KeyData == Keys.T)
                 {
@@ -1673,7 +1694,7 @@ namespace pidet
                     AddHistory();
                 }
             }
-            if (editMode == 2) {
+            if (editMode == Mode.DEBUG_MODE) {
                 //if (e.KeyData == (Keys.Control | Keys.B))
                 //{
                 //    Boolean bpChange = !bp[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y];
@@ -1695,7 +1716,7 @@ namespace pidet
 
         private void dgv_field_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (editMode == 1) SelectColorBlock(e.ColumnIndex, e.RowIndex);
+            if (editMode == Mode.SELECTOR_MODE) SelectColorBlock(e.ColumnIndex, e.RowIndex);
         }
 
         private void dgv_field_DragDrop(object sender, DragEventArgs e)
@@ -1743,7 +1764,7 @@ namespace pidet
 
         private void dgv_palette_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (editMode != 2)
+            if (editMode != Mode.DEBUG_MODE)
             {
                 foreach (DataGridViewCell item in dgv_field.SelectedCells)
                 {
@@ -1861,17 +1882,17 @@ namespace pidet
 
         private void tsmi_Cut_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) CutRect();
+            if (editMode != Mode.DEBUG_MODE) CutRect();
         }
 
         private void tsmi_Copy_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) CopyRect();
+            if (editMode != Mode.DEBUG_MODE) CopyRect();
         }
 
         private void tsmi_Paste_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) PasteRect();
+            if (editMode != Mode.DEBUG_MODE) PasteRect();
         }
 
         private void dgv_field_ColumnAdded(object sender, DataGridViewColumnEventArgs e)
@@ -1896,17 +1917,17 @@ namespace pidet
 
         private void tsmi_Undo_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) UndoHistory();
+            if (editMode != Mode.DEBUG_MODE) UndoHistory();
         }
 
         private void tsmi_Redo_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) RedoHistory();
+            if (editMode != Mode.DEBUG_MODE) RedoHistory();
         }
 
         private void tsmi_ChangeTool_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) ToggleEditMode();
+            if (editMode != Mode.DEBUG_MODE) ToggleEditMode();
         }
 
         private void tsmi_ZoomIn_Click(object sender, EventArgs e)
@@ -1921,7 +1942,7 @@ namespace pidet
 
         private void tsmi_ChangeCanvasSize_Click(object sender, EventArgs e)
         {
-            if (editMode != 2) ChangeSXSY();
+            if (editMode != Mode.DEBUG_MODE) ChangeSXSY();
         }
 
         private void tsmi_StartDebug_Click(object sender, EventArgs e)
@@ -1941,7 +1962,7 @@ namespace pidet
 
         private void tsmi_ResetDebug_Click(object sender, EventArgs e)
         {
-            if (editMode == 2) ResetDebug();
+            if (editMode == Mode.DEBUG_MODE) ResetDebug();
         }
 
         #endregion
@@ -1950,7 +1971,7 @@ namespace pidet
         {
             string statusStr = "[status]\r\n";
             statusStr += "W: " + sX.ToString() + " H: " + sY.ToString() + "\r\nD^2: " + (sX * sX + sY * sY).ToString() + "\r\ncS: " + cSize.ToString() + "\r\n\r\n";
-            if (editMode == 2)
+            if (editMode == Mode.DEBUG_MODE)
             {
                 statusStr +=
                     "Debugging...\r\nCommand: " + currentCommand +
