@@ -74,8 +74,9 @@
             this.btn_change = new System.Windows.Forms.Button();
             this.tm_status = new System.Windows.Forms.Timer(this.components);
             this.tb_stackbefore = new System.Windows.Forms.TextBox();
-            this.lbl_stack = new System.Windows.Forms.Label();
+            this.lbl_stack_before = new System.Windows.Forms.Label();
             this.btn_jump = new System.Windows.Forms.Button();
+            this.lbl_stack_after = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_field)).BeginInit();
             this.ms.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_palette)).BeginInit();
@@ -153,7 +154,7 @@
             this.toolStripSeparator2,
             this.tsmi_Quit});
             this.ファイルFToolStripMenuItem.Name = "ファイルFToolStripMenuItem";
-            this.ファイルFToolStripMenuItem.Size = new System.Drawing.Size(66, 20);
+            this.ファイルFToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
             this.ファイルFToolStripMenuItem.Text = "ファイル(&F)";
             // 
             // tsmi_CreateNew
@@ -292,7 +293,7 @@
             // 
             this.tsmi_ZoomIn.Name = "tsmi_ZoomIn";
             this.tsmi_ZoomIn.ShortcutKeyDisplayString = "Ctrl+＋";
-            this.tsmi_ZoomIn.Size = new System.Drawing.Size(187, 22);
+            this.tsmi_ZoomIn.Size = new System.Drawing.Size(188, 22);
             this.tsmi_ZoomIn.Text = "ズームイン(&I)";
             this.tsmi_ZoomIn.Click += new System.EventHandler(this.tsmi_ZoomIn_Click);
             // 
@@ -300,7 +301,7 @@
             // 
             this.tsmi_ZoomOut.Name = "tsmi_ZoomOut";
             this.tsmi_ZoomOut.ShortcutKeyDisplayString = "Ctrl+－";
-            this.tsmi_ZoomOut.Size = new System.Drawing.Size(187, 22);
+            this.tsmi_ZoomOut.Size = new System.Drawing.Size(188, 22);
             this.tsmi_ZoomOut.Text = "ズームアウト(&O)";
             this.tsmi_ZoomOut.Click += new System.EventHandler(this.tsmi_ZoomOut_Click);
             // 
@@ -309,7 +310,7 @@
             this.イメージIToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmi_ChangeCanvasSize});
             this.イメージIToolStripMenuItem.Name = "イメージIToolStripMenuItem";
-            this.イメージIToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            this.イメージIToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
             this.イメージIToolStripMenuItem.Text = "イメージ(&I)";
             // 
             // tsmi_ChangeCanvasSize
@@ -469,7 +470,7 @@
             this.tb_stack.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.tb_stack.Font = new System.Drawing.Font("Meiryo UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.tb_stack.Location = new System.Drawing.Point(297, 47);
+            this.tb_stack.Location = new System.Drawing.Point(297, 50);
             this.tb_stack.Multiline = true;
             this.tb_stack.Name = "tb_stack";
             this.tb_stack.ReadOnly = true;
@@ -553,15 +554,15 @@
             this.tb_stackbefore.WordWrap = false;
             this.tb_stackbefore.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tb_stackbefore_KeyDown);
             // 
-            // lbl_stack
+            // lbl_stack_before
             // 
-            this.lbl_stack.AutoSize = true;
-            this.lbl_stack.Font = new System.Drawing.Font("Meiryo UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lbl_stack.Location = new System.Drawing.Point(171, 32);
-            this.lbl_stack.Name = "lbl_stack";
-            this.lbl_stack.Size = new System.Drawing.Size(150, 15);
-            this.lbl_stack.TabIndex = 7;
-            this.lbl_stack.Text = "[Before]              [After]";
+            this.lbl_stack_before.AutoSize = true;
+            this.lbl_stack_before.Font = new System.Drawing.Font("Meiryo UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lbl_stack_before.Location = new System.Drawing.Point(171, 32);
+            this.lbl_stack_before.Name = "lbl_stack_before";
+            this.lbl_stack_before.Size = new System.Drawing.Size(55, 15);
+            this.lbl_stack_before.TabIndex = 7;
+            this.lbl_stack_before.Text = "[Before]";
             // 
             // btn_jump
             // 
@@ -573,13 +574,24 @@
             this.btn_jump.UseVisualStyleBackColor = true;
             this.btn_jump.Click += new System.EventHandler(this.btn_jump_Click);
             // 
+            // lbl_stack_after
+            // 
+            this.lbl_stack_after.AutoSize = true;
+            this.lbl_stack_after.Font = new System.Drawing.Font("Meiryo UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lbl_stack_after.Location = new System.Drawing.Point(294, 32);
+            this.lbl_stack_after.Name = "lbl_stack_after";
+            this.lbl_stack_after.Size = new System.Drawing.Size(46, 15);
+            this.lbl_stack_after.TabIndex = 11;
+            this.lbl_stack_after.Text = "[After]";
+            // 
             // main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(884, 642);
+            this.Controls.Add(this.lbl_stack_after);
             this.Controls.Add(this.btn_jump);
-            this.Controls.Add(this.lbl_stack);
+            this.Controls.Add(this.lbl_stack_before);
             this.Controls.Add(this.tb_stackbefore);
             this.Controls.Add(this.btn_change);
             this.Controls.Add(this.btn_reset);
@@ -658,13 +670,14 @@
         private System.Windows.Forms.ToolStripMenuItem tsmi_ChangeTool;
         private System.Windows.Forms.Timer tm_status;
         private System.Windows.Forms.TextBox tb_stackbefore;
-        private System.Windows.Forms.Label lbl_stack;
+        private System.Windows.Forms.Label lbl_stack_before;
         private System.Windows.Forms.ToolStripMenuItem tsmi_JumpDebug;
         private System.Windows.Forms.Button btn_jump;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Cut;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Copy;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Paste;
+        private System.Windows.Forms.Label lbl_stack_after;
     }
 }
 
