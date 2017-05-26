@@ -7,145 +7,37 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
 
-namespace pidet
+namespace Pidet
 {
-    public partial class main : Form
+    public partial class Main : Form
     {
         #region Definitions
 
-        public static string InputBox(string Prompt = "", string Title = "", string DefaultResponse = "")
-        {
-            var textBox = new TextBox();
-            textBox.Location = new Point(12, 84);
-            textBox.Size = new Size(329, 19);
-            textBox.Text = DefaultResponse;
-
-            var okButton = new Button();
-            okButton.DialogResult = DialogResult.OK;
-            okButton.Location = new Point(266, 9);
-            okButton.Size = new Size(75, 23);
-            okButton.Text = "OK";
-            okButton.UseVisualStyleBackColor = true;
-
-            var cancelButton = new Button();
-            cancelButton.DialogResult = DialogResult.Cancel;
-            cancelButton.Location = new Point(266, 38);
-            cancelButton.Size = new Size(75, 23);
-            cancelButton.Text = "キャンセル";
-            cancelButton.UseVisualStyleBackColor = true;
-
-            var label = new Label();
-            label.AutoSize = true;
-            label.Location = new Point(12, 9);
-            label.Size = new Size(0, 12);
-            label.Text = Prompt;
-
-            var form = new Form();
-            form.SuspendLayout();
-            form.AcceptButton = okButton;
-            form.CancelButton = cancelButton;
-            form.AutoScaleDimensions = new SizeF(6F, 12F);
-            form.AutoScaleMode = AutoScaleMode.Font;
-            form.ClientSize = new Size(353, 120);
-            form.ControlBox = false;
-            form.Controls.Add(textBox);
-            form.Controls.Add(okButton);
-            form.Controls.Add(cancelButton);
-            form.Controls.Add(label);
-            form.FormBorderStyle = FormBorderStyle.FixedDialog;
-            form.ShowInTaskbar = false;
-            form.StartPosition = FormStartPosition.CenterParent;
-            form.ResumeLayout(false);
-            form.PerformLayout();
-            form.Text = Title;
-
-            if (form.ShowDialog() == DialogResult.OK) return textBox.Text;
-            else return null;
-        }
-
-        public static int NumericInputBox(string Prompt = "", string Title = "", int DefaultResponse = 0, int MinValue = 0, int MaxValue = 100)
-        {
-            var nud = new NumericUpDown();
-            nud.Location = new Point(12, 84);
-            nud.Size = new Size(100, 19);
-            nud.Minimum = MinValue;
-            nud.Maximum = MaxValue;
-            nud.Value = DefaultResponse;
-
-            var okButton = new Button();
-            okButton.DialogResult = DialogResult.OK;
-            okButton.Location = new Point(266, 9);
-            okButton.Size = new Size(75, 23);
-            okButton.Text = "OK";
-            okButton.UseVisualStyleBackColor = true;
-
-            var cancelButton = new Button();
-            cancelButton.DialogResult = DialogResult.Cancel;
-            cancelButton.Location = new Point(266, 38);
-            cancelButton.Size = new Size(75, 23);
-            cancelButton.Text = "キャンセル";
-            cancelButton.UseVisualStyleBackColor = true;
-
-            var label = new Label();
-            label.AutoSize = true;
-            label.Location = new Point(12, 9);
-            label.Size = new Size(0, 12);
-            label.Text = Prompt;
-
-            var form = new Form();
-            form.SuspendLayout();
-            form.AcceptButton = okButton;
-            form.CancelButton = cancelButton;
-            form.AutoScaleDimensions = new SizeF(6F, 12F);
-            form.AutoScaleMode = AutoScaleMode.Font;
-            form.ClientSize = new Size(353, 120);
-            form.ControlBox = false;
-            form.Controls.Add(nud);
-            form.Controls.Add(okButton);
-            form.Controls.Add(cancelButton);
-            form.Controls.Add(label);
-            form.FormBorderStyle = FormBorderStyle.FixedDialog;
-            form.ShowInTaskbar = false;
-            form.StartPosition = FormStartPosition.CenterParent;
-            form.ResumeLayout(false);
-            form.PerformLayout();
-            form.Text = Title;
-
-            if (form.ShowDialog() == DialogResult.OK) return (int)nud.Value;
-            else return 0;
-        }
-
-        static string FF_FILTER = "Image|*.png;*.bmp|PNG|*.png|Bitmap|*.bmp";
-
-        class pColor
-        {
-            public const int LRed = 0, Red = 1, DRed = 2, LYellow = 3, Yellow = 4, DYellow = 5,
-                LGreen = 6, Green = 7, DGreen = 8, LCyan = 9, Cyan = 10, DCyan = 11, 
-                    LBlue = 12, Blue = 13, DBlue = 14, LMagenta = 15, Magenta = 16, DMagenta = 17, White = 18, Black = 19;
-        }
-        List<List<int>> codel = new List<List<int>>(), buffer = new List<List<int>>();
+        const string FILE_FORMAT_FILTER = "Image|*.png;*.bmp|PNG|*.png|Bitmap|*.bmp";
+        
+        List<List<int>> codels = new List<List<int>>(), buffer = new List<List<int>>();
         List<Comment> comments;
-        List<List<bool>> bp = new List<List<bool>>();
+        List<List<bool>> breakPoints = new List<List<bool>>();
         List<List<List<int>>> history = new List<List<List<int>>>();
-        int cSize = 20, sX = 3, sY = 3, hisIndex = -1, currentColor = 0, standardColor = 0;
+        int codelSize = 20, fieldWidth = 3, fieldHeight = 3, historyIndex = -1, currentColor = 0, standardColor = 0;
         Mode editMode = Mode.PEN_MODE;
         bool penWriting = false;
 
-        int fileCSize = 10;
+        int fileCodelSize = 10;
         string fileName = "NoName", filePath = "";
         bool saveRequired = false;
 
-        int ccX, ccY, ncX, ncY, dp, cc, wc, sc;
+        int currentCodelX, currentCodelY, nextCodelX, nextCodelY, directionPointer, codelChooser, waitCount, stepCount;
         string inputStr, inputStrTmp, outputStr, currentCommand;
         bool inputRequired = false, paused = true;
         List<int> stack;
-        List<List<int>> cbSize = new List<List<int>>();
-        List<List<List<List<int>>>> corner = new List<List<List<List<int>>>>(); //R, D, L, U
-        string[] commandsName = 
+        List<List<int>> colorBlockSizes = new List<List<int>>();
+        List<List<List<List<int>>>> corners = new List<List<List<List<int>>>>(); //R, D, L, U
+        string[] commandNames = 
             { "*", "push", "pop", "add", "sub", "multi", "div", "mod", "not",
                 "great", "point", "switch", "dup", "roll", "in(n)", "in(c)", "out(n)", "out(c)" },
-                dpName = { "→(0)", "↓(1)", "←(2)", "↑(3)" },
-                ccName = { "L(0)", "R(1)" };
+                directionPointerStrs = { "→(0)", "↓(1)", "←(2)", "↑(3)" },
+                codelChooserStrs = { "L(0)", "R(1)" };
 
         enum Mode
         {
@@ -230,32 +122,32 @@ namespace pidet
         void PrepareDebug()
         {
             ChangeEditMode(Mode.DEBUG_MODE);
-            ccX = ccY = ncX = ncY = dp = cc = wc = sc = 0;
+            currentCodelX = currentCodelY = nextCodelX = nextCodelY = directionPointer = codelChooser = waitCount = stepCount = 0;
             inputStr = inputStrTmp = ReplaceCrLf(tb_input.Text);
             outputStr = currentCommand = "";
             inputRequired = false;
             stack = new List<int>();
-            cbSize.Clear();
-            corner.Clear();
-            for (int i = 0; i < sX; i++)
+            colorBlockSizes.Clear();
+            corners.Clear();
+            for (int i = 0; i < fieldWidth; i++)
             {
-                cbSize.Add(new List<int>());
-                corner.Add(new List<List<List<int>>>());
-                for (int j = 0; j < sY; j++)
+                colorBlockSizes.Add(new List<int>());
+                corners.Add(new List<List<List<int>>>());
+                for (int j = 0; j < fieldHeight; j++)
 			    {
-                    cbSize[i].Add(0);
-                    corner[i].Add(new List<List<int>>());
+                    colorBlockSizes[i].Add(0);
+                    corners[i].Add(new List<List<int>>());
 			    }
             }
             //Stopwatch sw = new Stopwatch();
             //sw.Start();
             #region algo1
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    if (corner[i][j].Count > 0) continue;
-                    if (codel[i][j] == pColor.White || codel[i][j] == pColor.Black) continue;
+                    if (corners[i][j].Count > 0) continue;
+                    if (codels[i][j] == PietColors.White || codels[i][j] == PietColors.Black) continue;
                     List<Point> e1 = new List<Point> { new Point(i, j) }, e2 = new List<Point>();
                     List<List<int>> e3 = new List<List<int>>();
                     for (int k = 0; k < 2; k++)
@@ -266,7 +158,7 @@ namespace pidet
                     while (e1.Count > 0)
                     {
                         int eX = e1[0].X, eY = e1[0].Y;
-                        if ((eX > -1 && eX < sX && eY > -1 && eY < sY) && (!e2.Contains(new Point(eX, eY)) && codel[eX][eY] == codel[i][j]))
+                        if ((eX > -1 && eX < fieldWidth && eY > -1 && eY < fieldHeight) && (!e2.Contains(new Point(eX, eY)) && codels[eX][eY] == codels[i][j]))
                         {
                             e2.Add(new Point(eX, eY));
                             if (eX == e3[0][0]) //R
@@ -327,20 +219,20 @@ namespace pidet
                     int e2c = e2.Count;
                     foreach (Point item in e2)
                     {
-                        cbSize[item.X][item.Y] = e2c;
+                        colorBlockSizes[item.X][item.Y] = e2c;
                         for (int k = 0; k < 4; k++)
                         {
-                            corner[item.X][item.Y].Add(new List<int>());
+                            corners[item.X][item.Y].Add(new List<int>());
                             for (int l = 0; l < 3; l++)
                             {
-                                corner[item.X][item.Y][k].Add(0);
+                                corners[item.X][item.Y][k].Add(0);
                             }
                         }
                         for (int k = 0; k < 4; k++)
                         {
                             for (int l = 0; l < 3; l++)
                             {
-                                corner[item.X][item.Y][k][l] = e3[k][l];
+                                corners[item.X][item.Y][k][l] = e3[k][l];
                             }
                         }
                     }
@@ -373,10 +265,10 @@ namespace pidet
 
         void AdvanceDebug()
         {
-            if (wc == 0 && !inputRequired)
+            if (waitCount == 0 && !inputRequired)
             {
-                ccX = ncX;
-                ccY = ncY;
+                currentCodelX = nextCodelX;
+                currentCodelY = nextCodelY;
             }
             if (inputRequired)
             {
@@ -385,42 +277,43 @@ namespace pidet
             }
             else
             {
-                ++sc;
+                ++stepCount;
             }
-            int coX = corner[ccX][ccY][dp][0], coY = corner[ccX][ccY][dp][cc + 1],
-                dX = -(dp - 1) % 2, dY = -(dp - 2) % 2;
-            if (dp % 2 == 0)
+            int coX = corners[currentCodelX][currentCodelY][directionPointer][0],
+                coY = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1],
+                dX = -(directionPointer - 1) % 2, dY = -(directionPointer - 2) % 2;
+            if (directionPointer % 2 == 0)
             {
-                coX = corner[ccX][ccY][dp][0];
-                coY = corner[ccX][ccY][dp][cc + 1];
+                coX = corners[currentCodelX][currentCodelY][directionPointer][0];
+                coY = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1];
             }
             else
             {
-                coX = corner[ccX][ccY][dp][cc + 1];
-                coY = corner[ccX][ccY][dp][0];
+                coX = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1];
+                coY = corners[currentCodelX][currentCodelY][directionPointer][0];
             }
-            ncX = coX + dX;
-            ncY = coY + dY;
-            if (ncX < 0 || ncX > sX - 1 || ncY < 0 || ncY > sY - 1)
+            nextCodelX = coX + dX;
+            nextCodelY = coY + dY;
+            if (nextCodelX < 0 || nextCodelX > fieldWidth - 1 || nextCodelY < 0 || nextCodelY > fieldHeight - 1)
             {
                 Wait();
                 return;
             }
-            if (codel[ncX][ncY] == pColor.Black)
+            if (codels[nextCodelX][nextCodelY] == PietColors.Black)
             {
                 Wait();
                 return;
             }
-            if (codel[ncX][ncY] != pColor.White)
+            if (codels[nextCodelX][nextCodelY] != PietColors.White)
             {
-                wc = 0;
-                int n = codel[ncX][ncY], c = codel[ccX][ccY],
+                waitCount = 0;
+                int n = codels[nextCodelX][nextCodelY], c = codels[currentCodelX][currentCodelY],
                     diff = (n % 3 - c % 3 + 3) % 3 + (n / 3 - c / 3 + 6) % 6 * 3, last = stack.Count - 1;
-                currentCommand = commandsName[diff];
+                currentCommand = commandNames[diff];
                 switch (diff)
                 {
                     case 1: //push
-                        stack.Add(cbSize[ccX][ccY]);
+                        stack.Add(colorBlockSizes[currentCodelX][currentCodelY]);
                         break;
                     case 2: //pop
                         if (stack.Count == 0) break;
@@ -474,12 +367,12 @@ namespace pidet
                         break;
                     case 10: //point
                         if (stack.Count == 0) break;
-                        dp = ((dp + stack[last]) % 4 + 4) % 4;
+                        directionPointer = ((directionPointer + stack[last]) % 4 + 4) % 4;
                         stack.RemoveAt(last);
                         break;
                     case 11: //switch
                         if (stack.Count == 0) break;
-                        cc = ((cc + stack[last]) % 2 + 2) % 2;
+                        codelChooser = ((codelChooser + stack[last]) % 2 + 2) % 2;
                         stack.RemoveAt(last);
                         break;
                     case 12: //dup
@@ -551,21 +444,21 @@ namespace pidet
             {
                 while (true)
                 {
-                    ncX += dX;
-                    ncY += dY;
-                    if (ncX < 0 || ncX > sX - 1 || ncY < 0 || ncY > sY - 1)
+                    nextCodelX += dX;
+                    nextCodelY += dY;
+                    if (nextCodelX < 0 || nextCodelX > fieldWidth - 1 || nextCodelY < 0 || nextCodelY > fieldHeight - 1)
                     {
                         Wait();
                         return;
                     }
-                    if (codel[ncX][ncY] == pColor.Black)
+                    if (codels[nextCodelX][nextCodelY] == PietColors.Black)
                     {
                         Wait();
                         return;
                     }
-                    if (codel[ncX][ncY] != pColor.White) //noop
+                    if (codels[nextCodelX][nextCodelY] != PietColors.White) //noop
                     {
-                        wc = 0;
+                        waitCount = 0;
                         currentCommand = "noop";
                         return;
                     }
@@ -575,16 +468,16 @@ namespace pidet
 
         void Wait()
         {
-            if (wc == 7) EndDebug("デバッグが終了しました。");
-            if (wc % 2 == 0) cc = (cc + 1) % 2;
-            else dp = (dp + 1) % 4;
-            ++wc;
-            currentCommand = "wait(" + wc.ToString() + ")";
+            if (waitCount == 7) EndDebug("デバッグが終了しました。");
+            if (waitCount % 2 == 0) codelChooser = (codelChooser + 1) % 2;
+            else directionPointer = (directionPointer + 1) % 4;
+            ++waitCount;
+            currentCommand = "wait(" + waitCount.ToString() + ")";
         }
 
         void StartDebug(bool stepF = false, bool jumpF = false)
         {
-            if (codel[0][0] == pColor.White || codel[0][0] == pColor.Black)
+            if (codels[0][0] == PietColors.White || codels[0][0] == PietColors.Black)
             {
                 MessageBox.Show("左上のcodelが白または黒です。");
                 return;
@@ -592,7 +485,7 @@ namespace pidet
             int jumpT = 0;
             if (jumpF)
             {
-                jumpT = NumericInputBox("ジャンプする回数を指定して下さい。", "Pidet", 1, 1, 1000000000);
+                jumpT = InputBoxes.NumericInputBox("ジャンプする回数を指定して下さい。", "Pidet", 1, 1, 1000000000);
                 if (jumpT == 0) return;
             }
             if (editMode != Mode.DEBUG_MODE) PrepareDebug();
@@ -608,9 +501,9 @@ namespace pidet
                 {
                     AdvanceDebug();
                     ++stepCount;
-                    if (ncX > -1 && ncX < sX && ncY > -1 && ncY < sY)
+                    if (nextCodelX > -1 && nextCodelX < fieldWidth && nextCodelY > -1 && nextCodelY < fieldHeight)
                     {
-                        if (bp[ncX][ncY])
+                        if (breakPoints[nextCodelX][nextCodelY])
                         {
                             paused = true;
                             break;
@@ -630,9 +523,9 @@ namespace pidet
                 {
                     AdvanceDebug();
                     ++stepCount;
-                    if (ncX > -1 && ncX < sX && ncY > -1 && ncY < sY)
+                    if (nextCodelX > -1 && nextCodelX < fieldWidth && nextCodelY > -1 && nextCodelY < fieldHeight)
                     {
-                        if (bp[ncX][ncY])
+                        if (breakPoints[nextCodelX][nextCodelY])
                         {
                             paused = true;
                             break;
@@ -707,48 +600,48 @@ namespace pidet
         void SetSaveRequired(bool e)
         {
             saveRequired = e;
-            if (hisIndex > 0 && saveRequired) this.Text = fileName + " * - Pidet";
+            if (historyIndex > 0 && saveRequired) this.Text = fileName + " * - Pidet";
             else this.Text = fileName + " - Pidet";
         }
 
         void AddHistory()
         {
-            ++hisIndex;
+            ++historyIndex;
             SetSaveRequired(true);
             int c = history.Count;
-            for (int i = hisIndex; i < c; i++)
+            for (int i = historyIndex; i < c; i++)
             {
-                history.RemoveAt(hisIndex);
+                history.RemoveAt(historyIndex);
             }
             history.Add(new List<List<int>>());
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                history[hisIndex].Add(new List<int>());
-                for (int j = 0; j < sY; j++)
+                history[historyIndex].Add(new List<int>());
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    history[hisIndex][i].Add(codel[i][j]);
+                    history[historyIndex][i].Add(codels[i][j]);
                 }
             }
         }
 
         void UndoHistory()
         {
-            if (hisIndex < 1) return;
-            --hisIndex;
+            if (historyIndex < 1) return;
+            --historyIndex;
             SynchronizeHistoryToCodel();
         }
 
         void RedoHistory()
         {
-            if (hisIndex == history.Count - 1) return;
-            ++hisIndex;
+            if (historyIndex == history.Count - 1) return;
+            ++historyIndex;
             SynchronizeHistoryToCodel();
         }
 
         void ResetHistory()
         {
             history.Clear();
-            hisIndex = -1;
+            historyIndex = -1;
             AddHistory();
         }
 
@@ -766,13 +659,13 @@ namespace pidet
             //    }
             //}
             //RefreshField();
-            ChangeSX(history[hisIndex].Count);
-            ChangeSY(history[hisIndex][0].Count);
-            for (int i = 0; i < sX; i++)
+            ChangeSX(history[historyIndex].Count);
+            ChangeSY(history[historyIndex][0].Count);
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    codel[i][j] = history[hisIndex][i][j];
+                    codels[i][j] = history[historyIndex][i][j];
                 }
             }
             RefreshField();
@@ -780,39 +673,39 @@ namespace pidet
 
         void RefreshField()
         {
-            ChangeFieldX(sX);
-            ChangeFieldY(sY);
-            for (int i = 0; i < sX; i++)
+            ChangeFieldX(fieldWidth);
+            ChangeFieldY(fieldHeight);
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    dgv_field[i, j].Style.BackColor = ColorByIndex(codel[i][j]);
+                    dgv_field[i, j].Style.BackColor = ColorByIndex(codels[i][j]);
                 }
             }
         }
 
         void ResetCodel()
         {
-            codel.Clear();
-            for (int i = 0; i < sX; i++)
+            codels.Clear();
+            for (int i = 0; i < fieldWidth; i++)
             {
-                codel.Add(new List<int>());
-                for (int j = 0; j < sY; j++)
+                codels.Add(new List<int>());
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    codel[i].Add(pColor.White);
+                    codels[i].Add(PietColors.White);
                 }
             }
         }
 
         void ResetBP()
         {
-            bp.Clear();
-            for (int i = 0; i < sX; i++)
+            breakPoints.Clear();
+            for (int i = 0; i < fieldWidth; i++)
             {
-                bp.Add(new List<bool>());
-                for (int j = 0; j < sY; j++)
+                breakPoints.Add(new List<bool>());
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    bp[i].Add(false);
+                    breakPoints[i].Add(false);
                 }
             }
         }
@@ -833,7 +726,7 @@ namespace pidet
                 for (int i = fieldX; i < e; i++)
                 {
                     dgv_field.Columns.Add("", "");
-                    dgv_field.Columns[i].Width = cSize;
+                    dgv_field.Columns[i].Width = codelSize;
                 }
             }
         }
@@ -854,7 +747,7 @@ namespace pidet
                 for (int i = fieldY; i < e; i++)
                 {
                     dgv_field.Rows.Add();
-                    dgv_field.Rows[i].Height = cSize;
+                    dgv_field.Rows[i].Height = codelSize;
                 }
             }
         }
@@ -862,83 +755,83 @@ namespace pidet
         void ChangeCSize(int e)
         {
             if (e < 5) return;
-            cSize = e;
-            for (int i = 0; i < sX; i++)
+            codelSize = e;
+            for (int i = 0; i < fieldWidth; i++)
             {
-                dgv_field.Columns[i].Width = cSize;
+                dgv_field.Columns[i].Width = codelSize;
             }
-            for (int i = 0; i < sY; i++)
+            for (int i = 0; i < fieldHeight; i++)
             {
-                dgv_field.Rows[i].Height = cSize;
+                dgv_field.Rows[i].Height = codelSize;
             }
         }
 
         void ChangeSX(int e)
         {
             if (e < 1) return;
-            if (e < sX)
+            if (e < fieldWidth)
             {
-                for (int i = e; i < sX; i++)
+                for (int i = e; i < fieldWidth; i++)
                 {
-                    codel.RemoveAt(e);
-                    bp.RemoveAt(e);
+                    codels.RemoveAt(e);
+                    breakPoints.RemoveAt(e);
                     dgv_field.Columns.RemoveAt(e);
                 }
             }
-            else if (e > sX)
+            else if (e > fieldWidth)
             {
-                for (int i = sX; i < e; i++)
+                for (int i = fieldWidth; i < e; i++)
                 {
-                    codel.Add(new List<int>());
-                    bp.Add(new List<bool>());
-                    for (int j = 0; j < sY; j++)
+                    codels.Add(new List<int>());
+                    breakPoints.Add(new List<bool>());
+                    for (int j = 0; j < fieldHeight; j++)
                     {
-                        codel[i].Add(pColor.White);
-                        bp[i].Add(false);
+                        codels[i].Add(PietColors.White);
+                        breakPoints[i].Add(false);
                     }
                     dgv_field.Columns.Add("", "");
-                    dgv_field.Columns[i].Width = cSize;
+                    dgv_field.Columns[i].Width = codelSize;
                 }
             }
-            sX = e;
+            fieldWidth = e;
         }
 
         void ChangeSY(int e)
         {
             if (e < 1) return;
-            if (e < sY)
+            if (e < fieldHeight)
             {
-                for (int i = e; i < sY; i++)
+                for (int i = e; i < fieldHeight; i++)
                 {
-                    for (int j = 0; j < sX; j++)
+                    for (int j = 0; j < fieldWidth; j++)
                     {
-                        codel[j].RemoveAt(e);
-                        bp[j].RemoveAt(e);
+                        codels[j].RemoveAt(e);
+                        breakPoints[j].RemoveAt(e);
                     }
                     dgv_field.Rows.RemoveAt(e);
                 }
             }
-            else if (e > sY)
+            else if (e > fieldHeight)
             {
-                for (int i = sY; i < e; i++)
+                for (int i = fieldHeight; i < e; i++)
                 {
-                    for (int j = 0; j < sX; j++)
+                    for (int j = 0; j < fieldWidth; j++)
                     {
-                        codel[j].Add(pColor.White);
-                        bp[j].Add(false);
+                        codels[j].Add(PietColors.White);
+                        breakPoints[j].Add(false);
                     }
                     dgv_field.Rows.Add();
-                    dgv_field.Rows[i].Height = cSize;
+                    dgv_field.Rows[i].Height = codelSize;
                 }
             }
-            sY = e;
+            fieldHeight = e;
         }
 
         void ChangeSXSY()
         {
-            int newSX = NumericInputBox("キャンバスの幅を指定して下さい。", "Pidet", sX, 1, 100000);
+            int newSX = InputBoxes.NumericInputBox("キャンバスの幅を指定して下さい。", "Pidet", fieldWidth, 1, 100000);
             if (newSX == 0) return;
-            int newSY = NumericInputBox("キャンバスの高さを指定して下さい。", "Pidet", sY, 1, 100000);
+            int newSY = InputBoxes.NumericInputBox("キャンバスの高さを指定して下さい。", "Pidet", fieldHeight, 1, 100000);
             if (newSY == 0) return;
             ChangeSX(newSX);
             ChangeSY(newSY);
@@ -950,45 +843,45 @@ namespace pidet
             const int C0 = 192, FF = 255;
             switch (e)
             {
-                case pColor.LRed:
+                case PietColors.LRed:
                     return Color.FromArgb(FF, C0, C0);
-                case pColor.Red:
+                case PietColors.Red:
                     return Color.FromArgb(FF, 0, 0);
-                case pColor.DRed:
+                case PietColors.DRed:
                     return Color.FromArgb(C0, 0, 0);
-                case pColor.LYellow:
+                case PietColors.LYellow:
                     return Color.FromArgb(FF, FF, C0);
-                case pColor.Yellow:
+                case PietColors.Yellow:
                     return Color.FromArgb(FF, FF, 0);
-                case pColor.DYellow:
+                case PietColors.DYellow:
                     return Color.FromArgb(C0, C0, 0);
-                case pColor.LGreen:
+                case PietColors.LGreen:
                     return Color.FromArgb(C0, FF, C0);
-                case pColor.Green:
+                case PietColors.Green:
                     return Color.FromArgb(0, FF, 0);
-                case pColor.DGreen:
+                case PietColors.DGreen:
                     return Color.FromArgb(0, C0, 0);
-                case pColor.LCyan:
+                case PietColors.LCyan:
                     return Color.FromArgb(C0, FF, FF);
-                case pColor.Cyan:
+                case PietColors.Cyan:
                     return Color.FromArgb(0, FF, FF);
-                case pColor.DCyan:
+                case PietColors.DCyan:
                     return Color.FromArgb(0, C0, C0);
-                case pColor.LBlue:
+                case PietColors.LBlue:
                     return Color.FromArgb(C0, C0, FF);
-                case pColor.Blue:
+                case PietColors.Blue:
                     return Color.FromArgb(0, 0, FF);
-                case pColor.DBlue:
+                case PietColors.DBlue:
                     return Color.FromArgb(0, 0, C0);
-                case pColor.LMagenta:
+                case PietColors.LMagenta:
                     return Color.FromArgb(FF, C0, FF);
-                case pColor.Magenta:
+                case PietColors.Magenta:
                     return Color.FromArgb(FF, 0, FF);
-                case pColor.DMagenta:
+                case PietColors.DMagenta:
                     return Color.FromArgb(C0, 0, C0);
-                case pColor.White:
+                case PietColors.White:
                     return Color.FromArgb(FF, FF, FF);
-                case pColor.Black:
+                case PietColors.Black:
                     return Color.FromArgb(0, 0, 0);
                 default:
                     return Color.FromArgb(FF, FF, FF);
@@ -999,45 +892,45 @@ namespace pidet
         {
             switch (e)
             {
-                case pColor.LRed:
+                case PietColors.LRed:
                     return Color.FromArgb(light, middle, middle);
-                case pColor.Red:
+                case PietColors.Red:
                     return Color.FromArgb(light, dark, dark);
-                case pColor.DRed:
+                case PietColors.DRed:
                     return Color.FromArgb(middle, dark, dark);
-                case pColor.LYellow:
+                case PietColors.LYellow:
                     return Color.FromArgb(light, light, middle);
-                case pColor.Yellow:
+                case PietColors.Yellow:
                     return Color.FromArgb(light, light, dark);
-                case pColor.DYellow:
+                case PietColors.DYellow:
                     return Color.FromArgb(middle, middle, dark);
-                case pColor.LGreen:
+                case PietColors.LGreen:
                     return Color.FromArgb(middle, light, middle);
-                case pColor.Green:
+                case PietColors.Green:
                     return Color.FromArgb(dark, light, dark);
-                case pColor.DGreen:
+                case PietColors.DGreen:
                     return Color.FromArgb(dark, middle, dark);
-                case pColor.LCyan:
+                case PietColors.LCyan:
                     return Color.FromArgb(middle, light, light);
-                case pColor.Cyan:
+                case PietColors.Cyan:
                     return Color.FromArgb(dark, light, light);
-                case pColor.DCyan:
+                case PietColors.DCyan:
                     return Color.FromArgb(dark, middle, middle);
-                case pColor.LBlue:
+                case PietColors.LBlue:
                     return Color.FromArgb(middle, middle, light);
-                case pColor.Blue:
+                case PietColors.Blue:
                     return Color.FromArgb(dark, dark, light);
-                case pColor.DBlue:
+                case PietColors.DBlue:
                     return Color.FromArgb(dark, dark, middle);
-                case pColor.LMagenta:
+                case PietColors.LMagenta:
                     return Color.FromArgb(light, middle, light);
-                case pColor.Magenta:
+                case PietColors.Magenta:
                     return Color.FromArgb(light, dark, light);
-                case pColor.DMagenta:
+                case PietColors.DMagenta:
                     return Color.FromArgb(middle, dark, middle);
-                case pColor.White:
+                case PietColors.White:
                     return Color.FromArgb(light, light, light);
-                case pColor.Black:
+                case PietColors.Black:
                     return Color.FromArgb(dark, dark, dark);
                 default:
                     return Color.FromArgb(light, light, light);
@@ -1050,18 +943,18 @@ namespace pidet
             {
                 if (e.Equals(ColorByIndex(i))) return i;
             }
-            return pColor.White;
+            return PietColors.White;
         }
 
         void ChangeColor(int cX,int cY,int e)
         {
-            codel[cX][cY] = e;
+            codels[cX][cY] = e;
             dgv_field[cX, cY].Style.BackColor = ColorByIndex(e);
         }
 
         void ChangeBP(int cX, int cY, bool e)
         {
-            bp[cX][cY] = e;
+            breakPoints[cX][cY] = e;
             dgv_field.Refresh();
         }
 
@@ -1081,7 +974,7 @@ namespace pidet
             {
                 for (int j = 0; j < 6; j++)
                 {
-                    dgv_palette[(i + e % 3) % 3, (j + e / 3) % 6].Value = commandsName[i + j * 3];
+                    dgv_palette[(i + e % 3) % 3, (j + e / 3) % 6].Value = commandNames[i + j * 3];
                 }
             }
         }
@@ -1094,7 +987,7 @@ namespace pidet
             while (e.Count > 0)
             {
                 int eX = e[0].X, eY = e[0].Y;
-                if ((eX > -1 && eX < sX && eY > -1 && eY < sY) && (!dgv_field[eX, eY].Selected && codel[eX][eY] == codel[cX][cY]))
+                if ((eX > -1 && eX < fieldWidth && eY > -1 && eY < fieldHeight) && (!dgv_field[eX, eY].Selected && codels[eX][eY] == codels[cX][cY]))
                 {
                     dgv_field[eX, eY].Selected = true;
                     e.Add(new Point(eX - 1, eY));
@@ -1109,8 +1002,8 @@ namespace pidet
 
         void TrySelectColorBlock(int cX, int cY, int e)
         {
-            if (cX < 0 || cX > sX - 1 || cY < 0 || cY > sY - 1) return;
-            if (dgv_field[cX, cY].Selected || codel[cX][cY] != e) return;
+            if (cX < 0 || cX > fieldWidth - 1 || cY < 0 || cY > fieldHeight - 1) return;
+            if (dgv_field[cX, cY].Selected || codels[cX][cY] != e) return;
             dgv_field[cX, cY].Selected = true;
             TrySelectColorBlock(cX - 1, cY, e);
             TrySelectColorBlock(cX + 1, cY, e);
@@ -1121,12 +1014,12 @@ namespace pidet
         void RotateColor(int e)
         {
             int curX = dgv_field.CurrentCellAddress.X, curY = dgv_field.CurrentCellAddress.Y;
-            if (codel[curX][curY] == pColor.Black || codel[curX][curY] == pColor.White) return;
-            int dX = (e % 3 - codel[curX][curY] % 3 + 3) % 3, dY = (e / 3 - codel[curX][curY] / 3 + 6) % 6;
+            if (codels[curX][curY] == PietColors.Black || codels[curX][curY] == PietColors.White) return;
+            int dX = (e % 3 - codels[curX][curY] % 3 + 3) % 3, dY = (e / 3 - codels[curX][curY] / 3 + 6) % 6;
             foreach (DataGridViewCell item in dgv_field.SelectedCells)
             {
-                int oldColor = codel[item.ColumnIndex][item.RowIndex];
-                if (oldColor == pColor.White || oldColor == pColor.Black) continue;
+                int oldColor = codels[item.ColumnIndex][item.RowIndex];
+                if (oldColor == PietColors.White || oldColor == PietColors.Black) continue;
                 ChangeColor(item.ColumnIndex, item.RowIndex, (oldColor % 3 + dX) % 3 + (oldColor / 3 + dY) % 6 * 3);
             }
             AddHistory();
@@ -1156,7 +1049,7 @@ namespace pidet
                 buffer.Add(new List<int>());
                 for (int j = 0; j < b - t + 1; j++)
                 {
-                    buffer[i].Add(codel[l + i][t + j]);
+                    buffer[i].Add(codels[l + i][t + j]);
                 }
             }
             return true;
@@ -1167,7 +1060,7 @@ namespace pidet
             if (!CopyRect()) return;
             foreach (DataGridViewCell item in dgv_field.SelectedCells)
             {
-                ChangeColor(item.ColumnIndex, item.RowIndex, pColor.White);
+                ChangeColor(item.ColumnIndex, item.RowIndex, PietColors.White);
             }
             AddHistory();
         }
@@ -1183,7 +1076,7 @@ namespace pidet
                 if (item.ColumnIndex < l) l = item.ColumnIndex;
                 if (item.RowIndex < t) t = item.RowIndex;
             }
-            int icnt = Math.Min(sX - l, buffer.Count), jcnt = Math.Min(sY - t, buffer[0].Count);
+            int icnt = Math.Min(fieldWidth - l, buffer.Count), jcnt = Math.Min(fieldHeight - t, buffer[0].Count);
             for (int i = 0; i < icnt; i++)
             {
                 for (int j = 0; j < jcnt; j++)
@@ -1197,23 +1090,23 @@ namespace pidet
         void Translate(int dX, int dY)
         {
             List<List<int>> temp = new List<List<int>>();
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
                 temp.Add(new List<int>());
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    if (i < dX || i > sX + dX - 1 || j < dY || j > sY + dY - 1)
+                    if (i < dX || i > fieldWidth + dX - 1 || j < dY || j > fieldHeight + dY - 1)
                     {
-                        temp[i].Add(pColor.White);
+                        temp[i].Add(PietColors.White);
                     }else
                     {
-                        temp[i].Add(codel[i - dX][j - dY]);
+                        temp[i].Add(codels[i - dX][j - dY]);
                     }
                 }
             }
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
                     ChangeColor(i, j, temp[i][j]);
                 }
@@ -1227,7 +1120,7 @@ namespace pidet
 
         void CreateNew()
         {
-            if (hisIndex > 0 && saveRequired)
+            if (historyIndex > 0 && saveRequired)
             {
                 DialogResult result = MessageBox.Show(fileName + "への変更内容を保存しますか？", "Pidet", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation);
                 if (result == DialogResult.Yes)
@@ -1239,14 +1132,14 @@ namespace pidet
                     return;
                 }
             }
-            int newSX = NumericInputBox("キャンバスの幅を指定して下さい。", "Pidet", 10, 1, 100000);
+            int newSX = InputBoxes.NumericInputBox("キャンバスの幅を指定して下さい。", "Pidet", 10, 1, 100000);
             if (newSX == 0) return;
-            int newSY = NumericInputBox("キャンバスの高さを指定して下さい。", "Pidet", 10, 1, 100000);
+            int newSY = InputBoxes.NumericInputBox("キャンバスの高さを指定して下さい。", "Pidet", 10, 1, 100000);
             if (newSY == 0) return;
             if (editMode == Mode.DEBUG_MODE) EndDebug();
-            sX = newSX;
-            sY = newSY;
-            fileCSize = 10;
+            fieldWidth = newSX;
+            fieldHeight = newSY;
+            fileCodelSize = 10;
             fileName = "NoName";
             //this.Text = fileName + " - Pidet";
             filePath = "";
@@ -1259,7 +1152,7 @@ namespace pidet
 
         void OpenFile(string openFilePath = "")
         {
-            if (hisIndex > 0 && saveRequired)
+            if (historyIndex > 0 && saveRequired)
             {
                 DialogResult result = MessageBox.Show(fileName + "への変更内容を保存しますか？", "Pidet", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation);
                 if (result == DialogResult.Yes)
@@ -1274,11 +1167,11 @@ namespace pidet
             if (openFilePath == "")
             {
                 OpenFileDialog ofd = new OpenFileDialog();
-                ofd.Filter = FF_FILTER;
+                ofd.Filter = FILE_FORMAT_FILTER;
                 if (ofd.ShowDialog() != DialogResult.OK) return;
                 openFilePath = ofd.FileName;
             }
-            int openCSize = NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", 10, 1, 10000);
+            int openCSize = InputBoxes.NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", 10, 1, 10000);
             if (openCSize < 1) return;
             if (editMode == Mode.DEBUG_MODE) EndDebug();
             FileStream fs = null;
@@ -1306,27 +1199,27 @@ namespace pidet
                 bmp.Dispose();
                 return;
             }
-            fileCSize = openCSize;
+            fileCodelSize = openCSize;
             fileName = Path.GetFileName(openFilePath);
             //this.Text = fileName + " - Pidet";
             filePath = openFilePath;
-            sX = oX;
-            sY = oY;
-            codel.Clear();
+            fieldWidth = oX;
+            fieldHeight = oY;
+            codels.Clear();
             //Stopwatch sw = new Stopwatch();
             //sw.Start();
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             byte[] buf = new Byte[bmp.Width * bmp.Height * 4];
             Marshal.Copy(bmpData.Scan0, buf, 0, buf.Length);
             int stride = bmpData.Stride;
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                codel.Add(new List<int>());
-                for (int j = 0; j < sY; j++)
+                codels.Add(new List<int>());
+                for (int j = 0; j < fieldHeight; j++)
                 {
                     //codel[i].Add(IndexByColor(bmp.GetPixel(i * openCSize, j * openCSize)));
                     int pos = (i * 4 + j * stride) * openCSize;
-                    codel[i].Add(IndexByColor(Color.FromArgb(buf[pos + 2], buf[pos + 1], buf[pos])));
+                    codels[i].Add(IndexByColor(Color.FromArgb(buf[pos + 2], buf[pos + 1], buf[pos])));
                 }
             }
             Marshal.Copy(buf, 0, bmpData.Scan0, buf.Length);
@@ -1359,18 +1252,18 @@ namespace pidet
                 SaveFileAs();
                 return;
             }
-            Bitmap bmp = new Bitmap(sX * fileCSize, sY * fileCSize);
+            Bitmap bmp = new Bitmap(fieldWidth * fileCodelSize, fieldHeight * fileCodelSize);
             Graphics g = Graphics.FromImage(bmp);
             SolidBrush[] b=new SolidBrush[20];
             for (int i = 0; i < 20; i++)
 			{
                 b[i] = new SolidBrush(ColorByIndex(i));
 			}
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    g.FillRectangle(b[codel[i][j]], i * fileCSize, j * fileCSize, fileCSize, fileCSize);
+                    g.FillRectangle(b[codels[i][j]], i * fileCodelSize, j * fileCodelSize, fileCodelSize, fileCodelSize);
                 }
             }
             for (int i = 0; i < 20; i++)
@@ -1393,26 +1286,26 @@ namespace pidet
         {
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.FileName = fileName;
-            sfd.Filter = FF_FILTER;
+            sfd.Filter = FILE_FORMAT_FILTER;
             if (sfd.ShowDialog() != DialogResult.OK) return;
-            int saveCSize = NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", fileCSize, 1, 10000);
+            int saveCSize = InputBoxes.NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", fileCodelSize, 1, 10000);
             if (saveCSize == 0) return;
-            fileCSize = saveCSize;
+            fileCodelSize = saveCSize;
             fileName = Path.GetFileName(sfd.FileName);
             //this.Text = fileName + " - Pidet";
             filePath = sfd.FileName;
-            Bitmap bmp = new Bitmap(sX * fileCSize, sY * fileCSize);
+            Bitmap bmp = new Bitmap(fieldWidth * fileCodelSize, fieldHeight * fileCodelSize);
             Graphics g = Graphics.FromImage(bmp);
             SolidBrush[] b = new SolidBrush[20];
             for (int i = 0; i < 20; i++)
             {
                 b[i] = new SolidBrush(ColorByIndex(i));
             }
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    g.FillRectangle(b[codel[i][j]], i * fileCSize, j * fileCSize, fileCSize, fileCSize);
+                    g.FillRectangle(b[codels[i][j]], i * fileCodelSize, j * fileCodelSize, fileCodelSize, fileCodelSize);
                 }
             }
             for (int i = 0; i < 20; i++)
@@ -1438,24 +1331,24 @@ namespace pidet
             sfd.Filter = "Image|*.bmp;*.gif;*.png;*.jpg|Bitmap|*.bmp|GIF|*.gif|JPEG|*.jpg|PNG|*.png";
             sfd.Title = "Piet - RGB SelectMode";
             if (sfd.ShowDialog() != DialogResult.OK) return;
-            int saveCSize = NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", fileCSize, 1, 10000);
+            int saveCSize = InputBoxes.NumericInputBox("コーデルサイズを指定して下さい。", "Pidet", fileCodelSize, 1, 10000);
             if (saveCSize == 0) return;
-            fileCSize = saveCSize;
+            fileCodelSize = saveCSize;
             fileName = Path.GetFileName(sfd.FileName);
             //this.Text = fileName + " - Pidet";
             filePath = sfd.FileName;
-            Bitmap bmp = new Bitmap(sX * fileCSize, sY * fileCSize);
+            Bitmap bmp = new Bitmap(fieldWidth * fileCodelSize, fieldHeight * fileCodelSize);
             Graphics g = Graphics.FromImage(bmp);
             SolidBrush[] b = new SolidBrush[20];
             for (int i = 0; i < 20; i++)
             {
                 b[i] = new SolidBrush(ColorByIndexEx(i,0,127,255));
             }
-            for (int i = 0; i < sX; i++)
+            for (int i = 0; i < fieldWidth; i++)
             {
-                for (int j = 0; j < sY; j++)
+                for (int j = 0; j < fieldHeight; j++)
                 {
-                    g.FillRectangle(b[codel[i][j]], i * fileCSize, j * fileCSize, fileCSize, fileCSize);
+                    g.FillRectangle(b[codels[i][j]], i * fileCodelSize, j * fileCodelSize, fileCodelSize, fileCodelSize);
                 }
             }
             for (int i = 0; i < 20; i++)
@@ -1491,7 +1384,7 @@ namespace pidet
 
         #endregion
 
-        public main()
+        public Main()
         {
             InitializeComponent();
 
@@ -1545,7 +1438,7 @@ namespace pidet
 
         private void main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (hisIndex > 0 && saveRequired)
+            if (historyIndex > 0 && saveRequired)
             {
                 DialogResult result = MessageBox.Show(fileName + "への変更内容を保存しますか？", "Pidet", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation);
                 if (result == DialogResult.Yes)
@@ -1563,12 +1456,12 @@ namespace pidet
         {
             if (editMode == Mode.DEBUG_MODE)
             {
-                if (e.ColumnIndex == ccX && e.RowIndex == ccY)
+                if (e.ColumnIndex == currentCodelX && e.RowIndex == currentCodelY)
                 {
                     e.Paint(e.CellBounds, e.PaintParts & ~DataGridViewPaintParts.Focus & ~DataGridViewPaintParts.SelectionBackground);
                     ControlPaint.DrawGrid(e.Graphics, e.CellBounds, new Size(3, 3), e.CellStyle.BackColor);
                 }
-                else if (e.ColumnIndex == ncX && e.RowIndex == ncY)
+                else if (e.ColumnIndex == nextCodelX && e.RowIndex == nextCodelY)
                 {
                     e.Paint(e.CellBounds, e.PaintParts & ~DataGridViewPaintParts.Focus & ~DataGridViewPaintParts.SelectionBackground);
                     ControlPaint.DrawGrid(e.Graphics, e.CellBounds, new Size(4, 4), e.CellStyle.BackColor);
@@ -1596,21 +1489,21 @@ namespace pidet
                     e.Paint(e.CellBounds, e.PaintParts & ~DataGridViewPaintParts.Focus & ~DataGridViewPaintParts.SelectionBackground);
                 }
             }
-            if (bp[e.ColumnIndex][e.RowIndex])
+            if (breakPoints[e.ColumnIndex][e.RowIndex])
             {
                 Point[] points = 
                     { new Point(e.CellBounds.X, e.CellBounds.Y), 
-                        new Point(e.CellBounds.X+ cSize / 2, e.CellBounds.Y), new Point(e.CellBounds.X,e.CellBounds.Y+ cSize / 2) };
+                        new Point(e.CellBounds.X+ codelSize / 2, e.CellBounds.Y), new Point(e.CellBounds.X,e.CellBounds.Y+ codelSize / 2) };
                 e.Graphics.FillPolygon(Brushes.Red, points);
-                e.Graphics.DrawLine(Pens.White, e.CellBounds.X + cSize / 2, e.CellBounds.Y, e.CellBounds.X, e.CellBounds.Y + cSize / 2);
-                e.Graphics.DrawLine(Pens.White, e.CellBounds.X + cSize / 3, e.CellBounds.Y, e.CellBounds.X, e.CellBounds.Y + cSize / 3);
+                e.Graphics.DrawLine(Pens.White, e.CellBounds.X + codelSize / 2, e.CellBounds.Y, e.CellBounds.X, e.CellBounds.Y + codelSize / 2);
+                e.Graphics.DrawLine(Pens.White, e.CellBounds.X + codelSize / 3, e.CellBounds.Y, e.CellBounds.X, e.CellBounds.Y + codelSize / 3);
             }
             e.Handled = true;
         }
 
         private void dgv_field_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right) ChangeCurrentColor(codel[e.ColumnIndex][e.RowIndex]);
+            if (e.Button == MouseButtons.Right) ChangeCurrentColor(codels[e.ColumnIndex][e.RowIndex]);
         }
 
         private void main_KeyDown(object sender, KeyEventArgs e)
@@ -1633,22 +1526,22 @@ namespace pidet
 
             if (editMode != Mode.DEBUG_MODE)
             {
-                if (e.KeyData == (Keys.Control | Keys.K)) ChangeCurrentColor(codel[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y]);
+                if (e.KeyData == (Keys.Control | Keys.K)) ChangeCurrentColor(codels[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y]);
                 if (e.KeyData == (Keys.Control | Keys.R)) ChangeSXSY();
-                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Left)) { ChangeSX(sX - 1); AddHistory(); e.Handled = true; }
-                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Right)) { ChangeSX(sX + 1); AddHistory(); e.Handled = true; }
-                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Up)) { ChangeSY(sY - 1); AddHistory(); e.Handled = true; }
-                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Down)) { ChangeSY(sY + 1); AddHistory(); e.Handled = true; }
+                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Left)) { ChangeSX(fieldWidth - 1); AddHistory(); e.Handled = true; }
+                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Right)) { ChangeSX(fieldWidth + 1); AddHistory(); e.Handled = true; }
+                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Up)) { ChangeSY(fieldHeight - 1); AddHistory(); e.Handled = true; }
+                if (e.KeyData == (Keys.Control | Keys.Alt | Keys.Down)) { ChangeSY(fieldHeight + 1); AddHistory(); e.Handled = true; }
                 if (e.KeyData == (Keys.Shift | Keys.Alt | Keys.Left)) { Translate(-1, 0); e.Handled = true; }
                 if (e.KeyData == (Keys.Shift | Keys.Alt | Keys.Right)) { Translate(1, 0); e.Handled = true; }
                 if (e.KeyData == (Keys.Shift | Keys.Alt | Keys.Up)) { Translate(0, -1); e.Handled = true; }
                 if (e.KeyData == (Keys.Shift | Keys.Alt | Keys.Down)) { Translate(0, 1); e.Handled = true; }
                 if (e.KeyData == (Keys.Control | Keys.Enter) || e.KeyData == (Keys.Control | Keys.Space))
-                { ChangeCurrentColor(codel[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y]); e.Handled = true; }
+                { ChangeCurrentColor(codels[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y]); e.Handled = true; }
             }
 
-            if (e.KeyData == (Keys.Control | Keys.Oemplus)) ChangeCSize(cSize + 1);
-            if (e.KeyData == (Keys.Control | Keys.OemMinus)) ChangeCSize(cSize - 1);
+            if (e.KeyData == (Keys.Control | Keys.Oemplus)) ChangeCSize(codelSize + 1);
+            if (e.KeyData == (Keys.Control | Keys.OemMinus)) ChangeCSize(codelSize - 1);
             if (e.KeyData == (Keys.Control | Keys.Left)) { ChangeCurrentColor((currentColor + 2) % 3 + currentColor / 3 * 3); e.Handled = true; }
             if (e.KeyData == (Keys.Control | Keys.Right)) { ChangeCurrentColor((currentColor + 1) % 3 + currentColor / 3 * 3); e.Handled = true; }
             if (e.KeyData == (Keys.Control | Keys.Up)) { ChangeCurrentColor(currentColor % 3 + (currentColor / 3 + 6) % 7 * 3); e.Handled = true; }
@@ -1672,7 +1565,7 @@ namespace pidet
                 
                 if (e.KeyData == (Keys.Control | Keys.B))
                 {
-                    Boolean bpChange = !bp[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y];
+                    Boolean bpChange = !breakPoints[dgv_field.CurrentCellAddress.X][dgv_field.CurrentCellAddress.Y];
                     foreach (DataGridViewCell item in dgv_field.SelectedCells)
                     {
                         ChangeBP(item.ColumnIndex, item.RowIndex, bpChange);
@@ -1704,7 +1597,7 @@ namespace pidet
                     e.Handled = true;
                     foreach (DataGridViewCell item in dgv_field.SelectedCells)
                     {
-                        ChangeColor(item.ColumnIndex, item.RowIndex, pColor.White);
+                        ChangeColor(item.ColumnIndex, item.RowIndex, PietColors.White);
                     }
                     AddHistory();
                 }
@@ -1756,7 +1649,7 @@ namespace pidet
             {
                 HandledMouseEventArgs wEventArgs = e as HandledMouseEventArgs;
                 wEventArgs.Handled = true;
-                ChangeCSize(cSize - e.Delta / 60);
+                ChangeCSize(codelSize - e.Delta / 60);
             }
         }
 
@@ -1947,12 +1840,12 @@ namespace pidet
 
         private void tsmi_ZoomIn_Click(object sender, EventArgs e)
         {
-            ChangeCSize(cSize + 1);
+            ChangeCSize(codelSize + 1);
         }
 
         private void tsmi_ZoomOut_Click(object sender, EventArgs e)
         {
-            ChangeCSize(cSize - 1);
+            ChangeCSize(codelSize - 1);
         }
 
         private void tsmi_ChangeCanvasSize_Click(object sender, EventArgs e)
@@ -1985,12 +1878,12 @@ namespace pidet
         private void tm_status_Tick(object sender, EventArgs e)
         {
             string statusStr = "[status]\r\n";
-            statusStr += "W: " + sX.ToString() + " H: " + sY.ToString() + "\r\nD^2: " + (sX * sX + sY * sY).ToString() + "\r\ncS: " + cSize.ToString() + "\r\n\r\n";
+            statusStr += "W: " + fieldWidth.ToString() + " H: " + fieldHeight.ToString() + "\r\nD^2: " + (fieldWidth * fieldWidth + fieldHeight * fieldHeight).ToString() + "\r\ncS: " + codelSize.ToString() + "\r\n\r\n";
             if (editMode == Mode.DEBUG_MODE)
             {
                 statusStr +=
                     "Debugging...\r\nCommand: " + currentCommand +
-                    "\r\ndp: " + dpName[dp] + " cc: " + ccName[cc] + "\r\nStep: " + sc.ToString();
+                    "\r\ndp: " + directionPointerStrs[directionPointer] + " cc: " + codelChooserStrs[codelChooser] + "\r\nStep: " + stepCount.ToString();
             }
             else
             {

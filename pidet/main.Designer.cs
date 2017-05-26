@@ -1,6 +1,6 @@
-﻿namespace pidet
+﻿namespace Pidet
 {
-    partial class main
+    partial class Main
     {
         /// <summary>
         /// 必要なデザイナー変数です。
@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(main));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.dgv_field = new System.Windows.Forms.DataGridView();
             this.ms = new System.Windows.Forms.MenuStrip();
             this.ファイルFToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
