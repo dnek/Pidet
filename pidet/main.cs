@@ -27,12 +27,14 @@ namespace Pidet
         string fileName = "NoName", filePath = "";
         bool saveRequired = false;
 
-        int currentCodelX, currentCodelY, nextCodelX, nextCodelY, directionPointer, codelChooser, waitCount, stepCount;
+        int directionPointer, codelChooser, waitCount, stepCount, slideCount;
+        Point currentCodel, nextCodel;
+        List<Point> slideCodels;
         string inputStr, inputStrTmp, outputStr, currentCommand;
         bool inputRequired = false, paused = true;
         List<int> stack;
         List<List<int>> colorBlockSizes = new List<List<int>>();
-        List<List<List<List<int>>>> corners = new List<List<List<List<int>>>>(); //R, D, L, U
+        List<List<List<List<int>>>> corners = new List<List<List<List<int>>>>(); //各codelのRDLUの端の{x, y(L), y(R)} or {y, x(L), x(R)}
         string[] commandNames = 
             { "*", "push", "pop", "add", "sub", "multi", "div", "mod", "not",
                 "great", "point", "switch", "dup", "roll", "in(n)", "in(c)", "out(n)", "out(c)" },
@@ -122,7 +124,10 @@ namespace Pidet
         void PrepareDebug()
         {
             ChangeEditMode(Mode.DEBUG_MODE);
-            currentCodelX = currentCodelY = nextCodelX = nextCodelY = directionPointer = codelChooser = waitCount = stepCount = 0;
+            currentCodel = new Point(0, 0);
+            nextCodel = new Point(0, 0);
+            slideCodels = new List<Point>();
+            directionPointer = codelChooser = waitCount = stepCount = slideCount = 0;
             inputStr = inputStrTmp = ReplaceCrLf(tb_input.Text);
             outputStr = currentCommand = "";
             inputRequired = false;
@@ -148,78 +153,80 @@ namespace Pidet
                 {
                     if (corners[i][j].Count > 0) continue;
                     if (codels[i][j] == PietColors.White || codels[i][j] == PietColors.Black) continue;
-                    List<Point> e1 = new List<Point> { new Point(i, j) }, e2 = new List<Point>();
-                    List<List<int>> e3 = new List<List<int>>();
+                    List<Point> colorBlockTemp = new List<Point> { new Point(i, j) },
+                        colorBlockNew = new List<Point>();
+                    List<List<int>> cornerTemp = new List<List<int>>();
                     for (int k = 0; k < 2; k++)
                     {
-                        e3.Add(new List<int> { i, j, j });
-                        e3.Add(new List<int> { j, i, i });
+                        cornerTemp.Add(new List<int> { i, j, j });
+                        cornerTemp.Add(new List<int> { j, i, i });
                     }
-                    while (e1.Count > 0)
+                    while (colorBlockTemp.Count > 0)
                     {
-                        int eX = e1[0].X, eY = e1[0].Y;
-                        if ((eX > -1 && eX < fieldWidth && eY > -1 && eY < fieldHeight) && (!e2.Contains(new Point(eX, eY)) && codels[eX][eY] == codels[i][j]))
+                        int codelX = colorBlockTemp[0].X, codelY = colorBlockTemp[0].Y;
+                        if ((codelX > -1 && codelX < fieldWidth && codelY > -1 && codelY < fieldHeight)
+                            && (!colorBlockNew.Contains(new Point(codelX, codelY))
+                            && codels[codelX][codelY] == codels[i][j]))
                         {
-                            e2.Add(new Point(eX, eY));
-                            if (eX == e3[0][0]) //R
+                            colorBlockNew.Add(new Point(codelX, codelY));
+                            if (codelX == cornerTemp[0][0]) //R
                             {
-                                e3[0][0] = eX;
-                                if (eY < e3[0][1]) e3[0][1] = eY;
-                                if (eY > e3[0][2]) e3[0][2] = eY;
+                                cornerTemp[0][0] = codelX;
+                                if (codelY < cornerTemp[0][1]) cornerTemp[0][1] = codelY;
+                                if (codelY > cornerTemp[0][2]) cornerTemp[0][2] = codelY;
                             }
-                            else if (eX > e3[0][0])
+                            else if (codelX > cornerTemp[0][0])
                             {
-                                e3[0][0] = eX;
-                                e3[0][1] = e3[0][2] = eY;
-                            }
-
-                            if (eY == e3[1][0]) //D
-                            {
-                                e3[1][0] = eY;
-                                if (eX > e3[1][1]) e3[1][1] = eX;
-                                if (eX < e3[1][2]) e3[1][2] = eX;
-                            }
-                            else if (eY > e3[1][0])
-                            {
-                                e3[1][0] = eY;
-                                e3[1][1] = e3[1][2] = eX;
+                                cornerTemp[0][0] = codelX;
+                                cornerTemp[0][1] = cornerTemp[0][2] = codelY;
                             }
 
-                            if (eX == e3[2][0]) //L
+                            if (codelY == cornerTemp[1][0]) //D
                             {
-                                e3[2][0] = eX;
-                                if (eY > e3[2][1]) e3[2][1] = eY;
-                                if (eY < e3[2][2]) e3[2][2] = eY;
+                                cornerTemp[1][0] = codelY;
+                                if (codelX > cornerTemp[1][1]) cornerTemp[1][1] = codelX;
+                                if (codelX < cornerTemp[1][2]) cornerTemp[1][2] = codelX;
                             }
-                            else if (eX < e3[2][0])
+                            else if (codelY > cornerTemp[1][0])
                             {
-                                e3[2][0] = eX;
-                                e3[2][1] = e3[2][2] = eY;
-                            }
-
-                            if (eY == e3[3][0]) //U
-                            {
-                                e3[3][0] = eY;
-                                if (eX < e3[3][1]) e3[3][1] = eX;
-                                if (eX > e3[3][2]) e3[3][2] = eX;
-                            }
-                            else if (eY < e3[3][0])
-                            {
-                                e3[3][0] = eY;
-                                e3[3][1] = e3[3][2] = eX;
+                                cornerTemp[1][0] = codelY;
+                                cornerTemp[1][1] = cornerTemp[1][2] = codelX;
                             }
 
-                            e1.Add(new Point(eX - 1, eY));
-                            e1.Add(new Point(eX + 1, eY));
-                            e1.Add(new Point(eX, eY - 1));
-                            e1.Add(new Point(eX, eY + 1));
+                            if (codelX == cornerTemp[2][0]) //L
+                            {
+                                cornerTemp[2][0] = codelX;
+                                if (codelY > cornerTemp[2][1]) cornerTemp[2][1] = codelY;
+                                if (codelY < cornerTemp[2][2]) cornerTemp[2][2] = codelY;
+                            }
+                            else if (codelX < cornerTemp[2][0])
+                            {
+                                cornerTemp[2][0] = codelX;
+                                cornerTemp[2][1] = cornerTemp[2][2] = codelY;
+                            }
+
+                            if (codelY == cornerTemp[3][0]) //U
+                            {
+                                cornerTemp[3][0] = codelY;
+                                if (codelX < cornerTemp[3][1]) cornerTemp[3][1] = codelX;
+                                if (codelX > cornerTemp[3][2]) cornerTemp[3][2] = codelX;
+                            }
+                            else if (codelY < cornerTemp[3][0])
+                            {
+                                cornerTemp[3][0] = codelY;
+                                cornerTemp[3][1] = cornerTemp[3][2] = codelX;
+                            }
+
+                            colorBlockTemp.Add(new Point(codelX - 1, codelY));
+                            colorBlockTemp.Add(new Point(codelX + 1, codelY));
+                            colorBlockTemp.Add(new Point(codelX, codelY - 1));
+                            colorBlockTemp.Add(new Point(codelX, codelY + 1));
                         }
-                        e1.RemoveAt(0);
+                        colorBlockTemp.RemoveAt(0);
                     }
-                    int e2c = e2.Count;
-                    foreach (Point item in e2)
+                    foreach (Point item in colorBlockNew)
                     {
-                        colorBlockSizes[item.X][item.Y] = e2c;
+                        colorBlockSizes[item.X][item.Y] = colorBlockNew.Count;
                         for (int k = 0; k < 4; k++)
                         {
                             corners[item.X][item.Y].Add(new List<int>());
@@ -232,7 +239,7 @@ namespace Pidet
                         {
                             for (int l = 0; l < 3; l++)
                             {
-                                corners[item.X][item.Y][k][l] = e3[k][l];
+                                corners[item.X][item.Y][k][l] = cornerTemp[k][l];
                             }
                         }
                     }
@@ -265,11 +272,11 @@ namespace Pidet
 
         void AdvanceDebug()
         {
-            if (waitCount == 0 && !inputRequired)
-            {
-                currentCodelX = nextCodelX;
-                currentCodelY = nextCodelY;
-            }
+            //if (waitCount == 0 && !inputRequired)
+            //{
+            //    currentCodel.X = nextCodel.X;
+            //    currentCodel.Y = nextCodel.Y;
+            //}
             if (inputRequired)
             {
                 inputStr = ReplaceCrLf(tb_input.Text);
@@ -277,188 +284,232 @@ namespace Pidet
             }
             else
             {
+                currentCodel = nextCodel;
                 ++stepCount;
             }
-            int coX = corners[currentCodelX][currentCodelY][directionPointer][0],
-                coY = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1],
-                dX = -(directionPointer - 1) % 2, dY = -(directionPointer - 2) % 2;
-            if (directionPointer % 2 == 0)
+            int dX = -(directionPointer - 1) % 2, dY = -(directionPointer - 2) % 2;
+            if(codels[currentCodel.X][currentCodel.Y] != PietColors.White)
             {
-                coX = corners[currentCodelX][currentCodelY][directionPointer][0];
-                coY = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1];
-            }
-            else
-            {
-                coX = corners[currentCodelX][currentCodelY][directionPointer][codelChooser + 1];
-                coY = corners[currentCodelX][currentCodelY][directionPointer][0];
-            }
-            nextCodelX = coX + dX;
-            nextCodelY = coY + dY;
-            if (nextCodelX < 0 || nextCodelX > fieldWidth - 1 || nextCodelY < 0 || nextCodelY > fieldHeight - 1)
-            {
-                Wait();
-                return;
-            }
-            if (codels[nextCodelX][nextCodelY] == PietColors.Black)
-            {
-                Wait();
-                return;
-            }
-            if (codels[nextCodelX][nextCodelY] != PietColors.White)
-            {
-                waitCount = 0;
-                int n = codels[nextCodelX][nextCodelY], c = codels[currentCodelX][currentCodelY],
-                    diff = (n % 3 - c % 3 + 3) % 3 + (n / 3 - c / 3 + 6) % 6 * 3, last = stack.Count - 1;
-                currentCommand = commandNames[diff];
-                switch (diff)
+                int cornerX, cornerY;
+                if (directionPointer % 2 == 0)
                 {
-                    case 1: //push
-                        stack.Add(colorBlockSizes[currentCodelX][currentCodelY]);
-                        break;
-                    case 2: //pop
-                        if (stack.Count == 0) break;
-                        stack.RemoveAt(last);
-                        break;
-                    case 3: //add
-                        if (stack.Count < 2) break;
-                        stack[last - 1] += stack[last];
-                        stack.RemoveAt(last);
-                        break;
-                    case 4: //sub
-                        if (stack.Count < 2) break;
-                        stack[last - 1] -= stack[last];
-                        stack.RemoveAt(last);
-                        break;
-                    case 5: //multi
-                        if (stack.Count < 2) break;
-                        stack[last - 1] *= stack[last];
-                        stack.RemoveAt(last);
-                        break;
-                    case 6: //div
-                        if (stack.Count < 2) break;
-                        if (stack[last] == 0) break;
-                        stack[last - 1] /= stack[last];
-                        stack.RemoveAt(last);
-                        break;
-                    case 7: //mod
-                        if (stack.Count < 2) break;
-                        if (stack[last] == 0) break;
-                        stack[last - 1] %= stack[last];
-                        if (stack[last] * stack[last - 1] < 0) stack[last - 1] += stack[last];
-                        stack.RemoveAt(last);
-                        break;
-                    case 8: //not
-                        if (stack.Count == 0) break;
-                        if (stack[last] == 0) stack[last] = 1;
-                        else stack[last] = 0;
-                        break;
-                    case 9: //great
-                        if (stack.Count < 2) break;
-                        if (stack[last - 1] > stack[last])
-                        {
-                            stack.RemoveRange(last - 1, 2);
-                            stack.Add(1);
-                        }
-                        else
-                        {
-                            stack.RemoveRange(last - 1, 2);
-                            stack.Add(0);
-                        }
-                        break;
-                    case 10: //point
-                        if (stack.Count == 0) break;
-                        directionPointer = ((directionPointer + stack[last]) % 4 + 4) % 4;
-                        stack.RemoveAt(last);
-                        break;
-                    case 11: //switch
-                        if (stack.Count == 0) break;
-                        codelChooser = ((codelChooser + stack[last]) % 2 + 2) % 2;
-                        stack.RemoveAt(last);
-                        break;
-                    case 12: //dup
-                        if (stack.Count == 0) break;
-                        stack.Add(stack[last]);
-                        break;
-                    case 13: //roll
-                        if (stack.Count < 2) break;
-                        if (stack[last - 1] < 0) break;
-                        if (stack.Count - 2 < stack[last - 1]) break;
-                        int rd = stack[last - 1], rc = (stack[last] % rd + rd) % rd;
-                        for (int i = 0; i < rc; i++)
-                        {
-                            for (int j = 0; j < rd; j++)
+                    cornerX = corners[currentCodel.X][currentCodel.Y][directionPointer][0];
+                    cornerY = corners[currentCodel.X][currentCodel.Y][directionPointer][codelChooser + 1];
+                }
+                else
+                {
+                    cornerX = corners[currentCodel.X][currentCodel.Y][directionPointer][codelChooser + 1];
+                    cornerY = corners[currentCodel.X][currentCodel.Y][directionPointer][0];
+                }
+                nextCodel.X = cornerX + dX;
+                nextCodel.Y = cornerY + dY;
+                if (nextCodel.X < 0 || nextCodel.X > fieldWidth - 1 || nextCodel.Y < 0 || nextCodel.Y > fieldHeight - 1)
+                {
+                    nextCodel = currentCodel;
+                    Wait();
+                    return;
+                }
+                else if (codels[nextCodel.X][nextCodel.Y] == PietColors.Black)
+                {
+                    nextCodel = currentCodel;
+                    Wait();
+                    return;
+                }
+                else if (codels[nextCodel.X][nextCodel.Y] != PietColors.White)
+                {
+                    waitCount = 0;
+                    int nextCodelColor = codels[nextCodel.X][nextCodel.Y], currentCodelColor = codels[currentCodel.X][currentCodel.Y],
+                        diff = (nextCodelColor % 3 - currentCodelColor % 3 + 3) % 3 + (nextCodelColor / 3 - currentCodelColor / 3 + 6) % 6 * 3,
+                        lastStack = stack.Count - 1;
+                    currentCommand = commandNames[diff];
+                    switch (diff)
+                    {
+                        case 1: //push
+                            stack.Add(colorBlockSizes[currentCodel.X][currentCodel.Y]);
+                            break;
+                        case 2: //pop
+                            if (stack.Count == 0) break;
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 3: //add
+                            if (stack.Count < 2) break;
+                            stack[lastStack - 1] += stack[lastStack];
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 4: //sub
+                            if (stack.Count < 2) break;
+                            stack[lastStack - 1] -= stack[lastStack];
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 5: //multi
+                            if (stack.Count < 2) break;
+                            stack[lastStack - 1] *= stack[lastStack];
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 6: //div
+                            if (stack.Count < 2) break;
+                            if (stack[lastStack] == 0) break;
+                            stack[lastStack - 1] /= stack[lastStack];
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 7: //mod
+                            if (stack.Count < 2) break;
+                            if (stack[lastStack] == 0) break;
+                            stack[lastStack - 1] %= stack[lastStack];
+                            if (stack[lastStack] * stack[lastStack - 1] < 0) stack[lastStack - 1] += stack[lastStack];
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 8: //not
+                            if (stack.Count == 0) break;
+                            if (stack[lastStack] == 0) stack[lastStack] = 1;
+                            else stack[lastStack] = 0;
+                            break;
+                        case 9: //great
+                            if (stack.Count < 2) break;
+                            if (stack[lastStack - 1] > stack[lastStack])
                             {
-                                stack[last - j - 1] = stack[last - j - 2];
+                                stack.RemoveRange(lastStack - 1, 2);
+                                stack.Add(1);
                             }
-                            stack[last - rd - 1] = stack[last - 1];
-                        }
-                        stack.RemoveRange(last - 1, 2);
-                        break;
-                    case 14: //in(n)
-                        string[] tmp = inputStr.Split((string[])null, System.StringSplitOptions.RemoveEmptyEntries);
-                        if (tmp.Length == 0)
-                        {
-                            paused = true;
-                            inputRequired = true;
+                            else
+                            {
+                                stack.RemoveRange(lastStack - 1, 2);
+                                stack.Add(0);
+                            }
                             break;
-                        }
-                        int innum;
-                        if(int.TryParse(tmp[0], out innum))
-                        {
-                            stack.Add(innum);
-                            inputStr = inputStr.Remove(0, inputStr.IndexOf(tmp[0]) + tmp[0].Length);
-                        }
-                        break;
-                    case 15: //in(c)
-                        if (inputStr.Length == 0)
-                        {
-                            paused = true;
-                            inputRequired = true;
+                        case 10: //point
+                            if (stack.Count == 0) break;
+                            directionPointer = ((directionPointer + stack[lastStack]) % 4 + 4) % 4;
+                            stack.RemoveAt(lastStack);
                             break;
-                        }
-                        stack.Add(inputStr[0]);
-                        inputStr = inputStr.Remove(0, 1);
-                        break;
-                    case 16: //out(n)
-                        if (stack.Count == 0) break;
-                        outputStr += stack[last].ToString();
-                        stack.RemoveAt(last);
-                        break;
-                    case 17: //out(c)
-                        if (stack.Count == 0) break;
-                        try
-                        {
-                        outputStr += Convert.ToChar(stack[last]);
-                        }
-                        catch (Exception)
-                        {
+                        case 11: //switch
+                            if (stack.Count == 0) break;
+                            codelChooser = ((codelChooser + stack[lastStack]) % 2 + 2) % 2;
+                            stack.RemoveAt(lastStack);
                             break;
+                        case 12: //dup
+                            if (stack.Count == 0) break;
+                            stack.Add(stack[lastStack]);
+                            break;
+                        case 13: //roll
+                            if (stack.Count < 2) break;
+                            if (stack[lastStack - 1] < 0) break;
+                            if (stack.Count - 2 < stack[lastStack - 1]) break;
+                            int rd = stack[lastStack - 1], rc = (stack[lastStack] % rd + rd) % rd;
+                            for (int i = 0; i < rc; i++)
+                            {
+                                for (int j = 0; j < rd; j++)
+                                {
+                                    stack[lastStack - j - 1] = stack[lastStack - j - 2];
+                                }
+                                stack[lastStack - rd - 1] = stack[lastStack - 1];
+                            }
+                            stack.RemoveRange(lastStack - 1, 2);
+                            break;
+                        case 14: //in(n)
+                            string[] tmp = inputStr.Split((string[])null, System.StringSplitOptions.RemoveEmptyEntries);
+                            if (tmp.Length == 0)
+                            {
+                                paused = true;
+                                inputRequired = true;
+                                break;
+                            }
+                            int innum;
+                            if (int.TryParse(tmp[0], out innum))
+                            {
+                                stack.Add(innum);
+                                inputStr = inputStr.Remove(0, inputStr.IndexOf(tmp[0]) + tmp[0].Length);
+                            }
+                            break;
+                        case 15: //in(c)
+                            if (inputStr.Length == 0)
+                            {
+                                paused = true;
+                                inputRequired = true;
+                                break;
+                            }
+                            stack.Add(inputStr[0]);
+                            inputStr = inputStr.Remove(0, 1);
+                            break;
+                        case 16: //out(n)
+                            if (stack.Count == 0) break;
+                            outputStr += stack[lastStack].ToString();
+                            stack.RemoveAt(lastStack);
+                            break;
+                        case 17: //out(c)
+                            if (stack.Count == 0) break;
+                            try
+                            {
+                                outputStr += Convert.ToChar(stack[lastStack]);
+                            }
+                            catch (Exception)
+                            {
+                                break;
+                            }
+                            stack.RemoveAt(lastStack);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    while (true)
+                    {
+                        nextCodel.X += dX;
+                        nextCodel.Y += dY;
+                        if (nextCodel.X < 0 || nextCodel.X > fieldWidth - 1 || nextCodel.Y < 0 || nextCodel.Y > fieldHeight - 1)
+                        {
+                            //Wait();
+                            nextCodel.X -= dX;
+                            nextCodel.Y -= dY;
+                            waitCount = 0;
+                            Slide();
+                            return;
                         }
-                        stack.RemoveAt(last);
-                        break;
-                    default:
-                        break;
+                        else if (codels[nextCodel.X][nextCodel.Y] == PietColors.Black)
+                        {
+                            //Wait();
+                            nextCodel.X -= dX;
+                            nextCodel.Y -= dY;
+                            waitCount = 0;
+                            Slide();
+                            return;
+                        }
+                        else if (codels[nextCodel.X][nextCodel.Y] != PietColors.White) //noop
+                        {
+                            waitCount = slideCount = 0;
+                            currentCommand = "noop";
+                            return;
+                        }
+                    }
                 }
             }
             else
             {
                 while (true)
                 {
-                    nextCodelX += dX;
-                    nextCodelY += dY;
-                    if (nextCodelX < 0 || nextCodelX > fieldWidth - 1 || nextCodelY < 0 || nextCodelY > fieldHeight - 1)
+                    nextCodel.X += dX;
+                    nextCodel.Y += dY;
+                    if (nextCodel.X < 0 || nextCodel.X > fieldWidth - 1 || nextCodel.Y < 0 || nextCodel.Y > fieldHeight - 1)
                     {
-                        Wait();
+                        //Wait();
+                        nextCodel.X -= dX;
+                        nextCodel.Y -= dY;
+                        Slide();
                         return;
                     }
-                    if (codels[nextCodelX][nextCodelY] == PietColors.Black)
+                    else if (codels[nextCodel.X][nextCodel.Y] == PietColors.Black)
                     {
-                        Wait();
+                        //Wait();
+                        nextCodel.X -= dX;
+                        nextCodel.Y -= dY;
+                        Slide();
                         return;
                     }
-                    if (codels[nextCodelX][nextCodelY] != PietColors.White) //noop
+                    else if (codels[nextCodel.X][nextCodel.Y] != PietColors.White) //noop
                     {
-                        waitCount = 0;
+                        waitCount = slideCount = 0;
                         currentCommand = "noop";
                         return;
                     }
@@ -468,18 +519,51 @@ namespace Pidet
 
         void Wait()
         {
-            if (waitCount == 7) EndDebug("デバッグが終了しました。");
+            if (waitCount == 7)
+            {
+                EndDebug("デバッグが終了しました。");
+                return;
+            }
             if (waitCount % 2 == 0) codelChooser = (codelChooser + 1) % 2;
             else directionPointer = (directionPointer + 1) % 4;
             ++waitCount;
             currentCommand = "wait(" + waitCount.ToString() + ")";
         }
 
+        void Slide()
+        {
+            if (slideCount == 0) {
+                slideCodels.Clear();
+                slideCodels.Add(nextCodel);
+            }
+            else if(slideCodels[slideCodels.Count - 1] != nextCodel)
+            {
+                slideCodels.Add(nextCodel);
+                for (int i = 0, n = slideCodels.Count - 2; i < n; i++)
+                {
+                    if(slideCodels[i] == nextCodel)
+                    {
+                        EndDebug("デバッグが終了しました。");
+                        return;
+                    }
+                }
+            }
+            if (slideCount % 2 == 0) codelChooser = (codelChooser + 1) % 2;
+            else directionPointer = (directionPointer + 1) % 4;
+            ++slideCount;
+            currentCommand = "slide(" + slideCount.ToString() + ")";
+        }
+
         void StartDebug(bool stepF = false, bool jumpF = false)
         {
-            if (codels[0][0] == PietColors.White || codels[0][0] == PietColors.Black)
+            if (fieldWidth == 1 && fieldHeight == 1)
             {
-                MessageBox.Show("左上のcodelが白または黒です。");
+                MessageBox.Show("codelが1個しかありません。。");
+                return;
+            }
+            if (codels[0][0] == PietColors.Black)
+            {
+                MessageBox.Show("左上のcodelが黒です。");
                 return;
             }
             int jumpT = 0;
@@ -501,9 +585,9 @@ namespace Pidet
                 {
                     AdvanceDebug();
                     ++stepCount;
-                    if (nextCodelX > -1 && nextCodelX < fieldWidth && nextCodelY > -1 && nextCodelY < fieldHeight)
+                    if (nextCodel.X > -1 && nextCodel.X < fieldWidth && nextCodel.Y > -1 && nextCodel.Y < fieldHeight)
                     {
-                        if (breakPoints[nextCodelX][nextCodelY])
+                        if (breakPoints[nextCodel.X][nextCodel.Y])
                         {
                             paused = true;
                             break;
@@ -523,9 +607,9 @@ namespace Pidet
                 {
                     AdvanceDebug();
                     ++stepCount;
-                    if (nextCodelX > -1 && nextCodelX < fieldWidth && nextCodelY > -1 && nextCodelY < fieldHeight)
+                    if (nextCodel.X > -1 && nextCodel.X < fieldWidth && nextCodel.Y > -1 && nextCodel.Y < fieldHeight)
                     {
-                        if (breakPoints[nextCodelX][nextCodelY])
+                        if (breakPoints[nextCodel.X][nextCodel.Y])
                         {
                             paused = true;
                             break;
@@ -1456,12 +1540,12 @@ namespace Pidet
         {
             if (editMode == Mode.DEBUG_MODE)
             {
-                if (e.ColumnIndex == currentCodelX && e.RowIndex == currentCodelY)
+                if (e.ColumnIndex == currentCodel.X && e.RowIndex == currentCodel.Y)
                 {
                     e.Paint(e.CellBounds, e.PaintParts & ~DataGridViewPaintParts.Focus & ~DataGridViewPaintParts.SelectionBackground);
                     ControlPaint.DrawGrid(e.Graphics, e.CellBounds, new Size(3, 3), e.CellStyle.BackColor);
                 }
-                else if (e.ColumnIndex == nextCodelX && e.RowIndex == nextCodelY)
+                else if (e.ColumnIndex == nextCodel.X && e.RowIndex == nextCodel.Y)
                 {
                     e.Paint(e.CellBounds, e.PaintParts & ~DataGridViewPaintParts.Focus & ~DataGridViewPaintParts.SelectionBackground);
                     ControlPaint.DrawGrid(e.Graphics, e.CellBounds, new Size(4, 4), e.CellStyle.BackColor);
@@ -1882,7 +1966,7 @@ namespace Pidet
             if (editMode == Mode.DEBUG_MODE)
             {
                 statusStr +=
-                    "Debugging...\r\nCommand: " + currentCommand +
+                    "Debugging...\r\nCommand:\r\n " + currentCommand +
                     "\r\ndp: " + directionPointerStrs[directionPointer] + " cc: " + codelChooserStrs[codelChooser] + "\r\nStep: " + stepCount.ToString();
             }
             else
