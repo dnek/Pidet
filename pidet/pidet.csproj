@@ -3,6 +3,7 @@
     <ProjectGuid>{2D65A54D-2686-49C1-91D1-C2086262064C}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>Pidet</RootNamespace>
