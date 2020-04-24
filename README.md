@@ -1,6 +1,13 @@
 # Pidet
 IDE for Piet.
 
+## Important notice
+Pidetには、入力が不足している場合の処理などPietの仕様に対する**致命的な違反**があり、また**今後Pidetをメンテナンスする予定はありません**。
+代わりにクロスプラットフォーム対応もしている **[Pietron](https://github.com/dnek/pietron)** を使用してください。
+
+Pidet has **fatal violations** of the Piet specification, such as the handling of missing input, and there are **no plans to maintain Pidet in the future**.
+Use **[Pietron](https://github.com/dnek/pietron)** instead, which also has cross-platform support.
+
 ## Overview
 - 難解プログラミング言語「Piet」のエディタとデバッガの機能を備えたIDEです。
 - 開発言語はC#です。
